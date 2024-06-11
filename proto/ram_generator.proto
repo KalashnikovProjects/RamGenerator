@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package ram_generator;
+option go_package = "github.com/KalashnikovProjects/RamGenerator/proto";
+
+
+message GenerateStartPromptRequest {
+  string user_prompt = 1;
+}
+
+message GenerateHybridPromptRequest {
+  repeated string ram_image = 1;
+}
+
+message ImagePrompt {
+  string prompt = 1;
+}
+
+message GenerateImageRequest {
+  string prompt = 1;
+  string style = 2;
+}
+
+message GenerateImageResponse {
+  string ram_image = 1;
+}
+
+
+service RamGenerator {
+  rpc GenerateStartPrompt(GenerateStartPromptRequest) returns (ImagePrompt);
+  rpc GenerateHybridPrompt(GenerateHybridPromptRequest) returns (ImagePrompt);
+  rpc GenerateImage(GenerateImageRequest) returns (GenerateImageResponse);
+}
