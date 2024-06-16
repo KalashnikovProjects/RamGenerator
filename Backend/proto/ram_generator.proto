@@ -1,15 +1,16 @@
 syntax = "proto3";
 
 package ram_generator;
-option go_package = "github.com/KalashnikovProjects/RamGenerator/proto";
 
+option go_package = "github.com/KalashnikovProjects/RamGenerator/protos";
 
 message GenerateStartPromptRequest {
   string user_prompt = 1;
 }
 
 message GenerateHybridPromptRequest {
-  repeated string ram_image = 1;
+  string user_prompt = 1;
+  repeated string ram_images = 2;   // base64
 }
 
 message ImagePrompt {
@@ -22,7 +23,7 @@ message GenerateImageRequest {
 }
 
 message GenerateImageResponse {
-  string ram_image = 1;
+  string ram_image = 1;           // base64
 }
 
 
