@@ -1,4 +1,5 @@
 .env
 VE
 Backend/.idea
+Backend/Python/tests/my_tests.py
 .idea
