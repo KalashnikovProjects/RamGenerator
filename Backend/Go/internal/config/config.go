@@ -5,15 +5,15 @@ import (
 )
 
 type GRPCConfig struct {
-	Host  string
+	URL   string
 	Token string
 }
 
 type DatabaseConfig struct {
-	ConnectionString string
-	User             string
-	Password         string
-	DBName           string
+	Host     string
+	User     string
+	Password string
+	DBName   string
 }
 
 type Config struct {
@@ -25,14 +25,14 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		GRPC: GRPCConfig{
-			Host:  getEnv("GRPC_HOST", "localhost:50051"),
+			URL:   getEnv("GRPC_URL", "localhost:50051"),
 			Token: getEnv("GRPC_SECRET_TOKEN", ""),
 		},
 		Database: DatabaseConfig{
-			ConnectionString: getEnv("POSTGRES_STRING", ""),
-			User:             getEnv("POSTGRES_USER", ""),
-			Password:         getEnv("POSTGRES_PASSWORD", ""),
-			DBName:           getEnv("POSTGRES_DB", ""),
+			Host:     getEnv("POSTGRES_HOST", ""),
+			User:     getEnv("POSTGRES_USER", ""),
+			Password: getEnv("POSTGRES_PASSWORD", ""),
+			DBName:   getEnv("POSTGRES_DB", ""),
 		},
 	}
 }
