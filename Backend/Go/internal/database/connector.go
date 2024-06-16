@@ -29,6 +29,10 @@ type SQLTXQueryExec interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
+func GeneratePostgresConnectionString(user, password, host string, pgPort int, dbName string) string {
+	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s?sslmode=disable`, user, password, host, pgPort, dbName)
+}
+
 func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -43,15 +47,20 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 			username varchar(24) UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
 			last_ram_generated INT,
-			avatar_ram_id INT REFERENCES rams (id),
+			avatar_ram_id INT,
 			avatar_box BOX 
+		                                 
 		);
 		CREATE TABLE IF NOT EXISTS rams (
 		    id SERIAL PRIMARY KEY,
 		    name TEXT DEFAULT '',
 		    image_url TEXT NOT NULL,
 		    user_id INT NOT NULL REFERENCES users (id)
-		)
+		);
+
+		ALTER TABLE users
+		ADD FOREIGN KEY (avatar_ram_id) REFERENCES rams(id);
+		
 	`)
 	if err != nil {
 		return nil, err
