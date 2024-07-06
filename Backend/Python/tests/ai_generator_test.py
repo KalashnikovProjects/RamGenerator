@@ -1,9 +1,9 @@
 import unittest
 import logging
-
 import grpc_testing
+
 from ..ai_generator import grpc_server
-from ..ai_generator import ram_generator_pb2
+from ..ai_generator.proto_generated import ram_generator_pb2
 
 
 class SampleServiceTest(unittest.TestCase):

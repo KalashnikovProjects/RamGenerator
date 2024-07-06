@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import ram_generator_pb2 as ram__generator__pb2
+from . import ram_generator_pb2 as ram__generator__pb2
 
 
 class RamGeneratorStub(object):
@@ -17,17 +17,22 @@ class RamGeneratorStub(object):
         self.GenerateStartPrompt = channel.unary_unary(
                 '/ram_generator.RamGenerator/GenerateStartPrompt',
                 request_serializer=ram__generator__pb2.GenerateStartPromptRequest.SerializeToString,
-                response_deserializer=ram__generator__pb2.ImagePrompt.FromString,
+                response_deserializer=ram__generator__pb2.RamImagePrompt.FromString,
                 )
         self.GenerateHybridPrompt = channel.unary_unary(
                 '/ram_generator.RamGenerator/GenerateHybridPrompt',
                 request_serializer=ram__generator__pb2.GenerateHybridPromptRequest.SerializeToString,
-                response_deserializer=ram__generator__pb2.ImagePrompt.FromString,
+                response_deserializer=ram__generator__pb2.RamImagePrompt.FromString,
                 )
         self.GenerateImage = channel.unary_unary(
                 '/ram_generator.RamGenerator/GenerateImage',
                 request_serializer=ram__generator__pb2.GenerateImageRequest.SerializeToString,
-                response_deserializer=ram__generator__pb2.GenerateImageResponse.FromString,
+                response_deserializer=ram__generator__pb2.RamImage.FromString,
+                )
+        self.GenerateDescription = channel.unary_unary(
+                '/ram_generator.RamGenerator/GenerateDescription',
+                request_serializer=ram__generator__pb2.RamImageUrl.SerializeToString,
+                response_deserializer=ram__generator__pb2.RamDescription.FromString,
                 )
 
 
@@ -52,23 +57,34 @@ class RamGeneratorServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GenerateDescription(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RamGeneratorServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GenerateStartPrompt': grpc.unary_unary_rpc_method_handler(
                     servicer.GenerateStartPrompt,
                     request_deserializer=ram__generator__pb2.GenerateStartPromptRequest.FromString,
-                    response_serializer=ram__generator__pb2.ImagePrompt.SerializeToString,
+                    response_serializer=ram__generator__pb2.RamImagePrompt.SerializeToString,
             ),
             'GenerateHybridPrompt': grpc.unary_unary_rpc_method_handler(
                     servicer.GenerateHybridPrompt,
                     request_deserializer=ram__generator__pb2.GenerateHybridPromptRequest.FromString,
-                    response_serializer=ram__generator__pb2.ImagePrompt.SerializeToString,
+                    response_serializer=ram__generator__pb2.RamImagePrompt.SerializeToString,
             ),
             'GenerateImage': grpc.unary_unary_rpc_method_handler(
                     servicer.GenerateImage,
                     request_deserializer=ram__generator__pb2.GenerateImageRequest.FromString,
-                    response_serializer=ram__generator__pb2.GenerateImageResponse.SerializeToString,
+                    response_serializer=ram__generator__pb2.RamImage.SerializeToString,
+            ),
+            'GenerateDescription': grpc.unary_unary_rpc_method_handler(
+                    servicer.GenerateDescription,
+                    request_deserializer=ram__generator__pb2.RamImageUrl.FromString,
+                    response_serializer=ram__generator__pb2.RamDescription.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -93,7 +109,7 @@ class RamGenerator(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ram_generator.RamGenerator/GenerateStartPrompt',
             ram__generator__pb2.GenerateStartPromptRequest.SerializeToString,
-            ram__generator__pb2.ImagePrompt.FromString,
+            ram__generator__pb2.RamImagePrompt.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -110,7 +126,7 @@ class RamGenerator(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ram_generator.RamGenerator/GenerateHybridPrompt',
             ram__generator__pb2.GenerateHybridPromptRequest.SerializeToString,
-            ram__generator__pb2.ImagePrompt.FromString,
+            ram__generator__pb2.RamImagePrompt.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -127,6 +143,23 @@ class RamGenerator(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ram_generator.RamGenerator/GenerateImage',
             ram__generator__pb2.GenerateImageRequest.SerializeToString,
-            ram__generator__pb2.GenerateImageResponse.FromString,
+            ram__generator__pb2.RamImage.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GenerateDescription(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ram_generator.RamGenerator/GenerateDescription',
+            ram__generator__pb2.RamImageUrl.SerializeToString,
+            ram__generator__pb2.RamDescription.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

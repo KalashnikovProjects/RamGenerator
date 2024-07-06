@@ -14,21 +14,27 @@ services:
 
   go-rest:
     build:
-      dockerfile: Docker/go-rest.Dockerfile
+      context: Backend/Go
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOSTNAME: postgres
+      GRPC_HOSTNAME: pygrpc
     ports:
-      - "8080:8080"
+      - "80:80"
     depends_on:
       - postgres
 
   py-grpc:
+    hostname: pygrpc
     build:
-      dockerfile: Docker/py-grpc.Dockerfile
+      context: Backend/Python
+      dockerfile: Dockerfile
     env_file:
       - .env
+    environment:
+      GRPC_HOSTNAME: pygrpc
     ports:
       - "50051:50051"
 

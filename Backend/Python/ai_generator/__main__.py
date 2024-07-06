@@ -1,6 +1,7 @@
-from grpc_server import RamGeneratorServer
 import logging
-import config
+
+from .grpc_server import RamGeneratorServer
+from . import config
 
 
 class CustomLoggingFormatter(logging.Formatter):
@@ -36,5 +37,6 @@ def beautiful_logging():
     logger.addHandler(console)
 
 
-beautiful_logging()
-RamGeneratorServer.serve()
+if __name__ == "__main__":
+    beautiful_logging()
+    RamGeneratorServer.serve()

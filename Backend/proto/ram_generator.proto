@@ -10,10 +10,10 @@ message GenerateStartPromptRequest {
 
 message GenerateHybridPromptRequest {
   string user_prompt = 1;
-  repeated string ram_images = 2;   // base64
+  repeated string ram_descriptions = 2;
 }
 
-message ImagePrompt {
+message RamImagePrompt {
   string prompt = 1;
 }
 
@@ -22,13 +22,21 @@ message GenerateImageRequest {
   string style = 2;
 }
 
-message GenerateImageResponse {
-  string ram_image = 1;           // base64
+message RamImage {
+  string image = 1;  // base64
 }
 
+message RamImageUrl {
+  string url = 1;  // base64
+}
+
+message RamDescription {
+  string description = 1;
+}
 
 service RamGenerator {
-  rpc GenerateStartPrompt(GenerateStartPromptRequest) returns (ImagePrompt);
-  rpc GenerateHybridPrompt(GenerateHybridPromptRequest) returns (ImagePrompt);
-  rpc GenerateImage(GenerateImageRequest) returns (GenerateImageResponse);
+  rpc GenerateStartPrompt(GenerateStartPromptRequest) returns (RamImagePrompt);
+  rpc GenerateHybridPrompt(GenerateHybridPromptRequest) returns (RamImagePrompt);
+  rpc GenerateImage(GenerateImageRequest) returns (RamImage);
+  rpc GenerateDescription(RamImageUrl) returns (RamDescription);
 }

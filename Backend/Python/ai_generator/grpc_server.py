@@ -1,13 +1,12 @@
 import logging
-from base64 import b64decode
 from concurrent import futures
 
 import grpc
 
-import ai_generators
-import config
-import ram_generator_pb2
-import ram_generator_pb2_grpc
+from . import ai_generators
+from . import config
+from .proto_generated import ram_generator_pb2
+from .proto_generated import ram_generator_pb2_grpc
 
 
 def generate_error_handler(status_code, error: str):
@@ -21,7 +20,7 @@ class AuthInterceptor(grpc.ServerInterceptor):
     def intercept_service(self, continuation, handler_call_details):
         metadata = dict(handler_call_details.invocation_metadata)
         auth_token = metadata.get('authorization')
-        if not auth_token or not auth_token.startswith('Bearer ') or auth_token[7:] != config.gRPC.SECRET_TOKEN:
+        if not auth_token or not auth_token.startswith('Bearer ') or auth_token[7:] != config.GRPC.SECRET_TOKEN:
             logging.debug("Failed authorization")
             return generate_error_handler(grpc.StatusCode.UNAUTHENTICATED, "Access denied. Authentication required.")
         else:
@@ -37,10 +36,15 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.safety_settings,
-                                                  system_instructions=config.PROMPTS.PERMANENT_START_PROMPT_GENERATOR_PROMPT)
-
-        res = generator.generate(request.user_prompt)
-        return ram_generator_pb2.ImagePrompt(prompt=res)
+                                                  system_instructions=config.PROMPTS.BASE_START_PROMPT_GENERATOR_PROMPT)
+        prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}"
+        try:
+            res = generator.generate(prompt)
+            return ram_generator_pb2.RamImagePrompt(prompt=res)
+        except ai_generators.GeminiCensorshipError:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt contains illegal content")
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
     @staticmethod
     def GenerateHybridPrompt(request, context, **kwargs):
@@ -49,10 +53,16 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.safety_settings,
-                                                  system_instructions=config.PROMPTS.PERMANENT_HYBRID_PROMPT_GENERATOR_PROMPT)
-        images = [{"mime_type": "image/jpeg", "data": b64decode(im)} for im in request.ram_images]
-        res = generator.generate(request.user_prompt, images)
-        return ram_generator_pb2.ImagePrompt(prompt=res)
+                                                  system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT_GENERATOR_PROMPT)
+        rams = '\n'.join(request.ram_descriptions)
+        prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}\nОписание баранов пользователя: \n{rams}"
+        try:
+            res = generator.generate(prompt, [])
+            return ram_generator_pb2.RamImagePrompt(prompt=res)
+        except ai_generators.GeminiCensorshipError:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt or descriptions contains illegal content")
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
     @staticmethod
     def GenerateImage(request, context, **kwargs):
@@ -60,11 +70,11 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         api = ai_generators.ImageGenerator(config.KANDINSKY.ENDPOINT, config.KANDINSKY.KEY,
                                            config.KANDINSKY.SECRET_KEY)
         model_id = api.get_model()
-        uuid = api.generate(f"{config.PROMPTS.PERMANENT_IMAGE_PROMPT}, {request.prompt}", model_id)
+        uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, model_id)
 
         try:
             image = api.check_generation(uuid)
-            return ram_generator_pb2.GenerateImageResponse(ram_image=image)
+            return ram_generator_pb2.RamImage(image=image)
         except ai_generators.ImageGenerationTimeoutError:
             context.abort(grpc.StatusCode.DEADLINE_EXCEEDED, f"The waiting time for image generation has been exceeded")
         except Exception as e:
@@ -72,9 +82,25 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
 
         return context
 
+    @staticmethod
+    def GenerateDescription(request, context, **kwargs):
+        logging.info(f"Генерация описания")
+
+        generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
+                                                  model_name=config.GEMINI.MODEL,
+                                                  safety_settings=config.GEMINI.safety_settings,
+                                                  system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT)
+        try:
+            res = generator.generate("Напиши описание для изображения барана", [{"file_uri": request.url}])
+            return ram_generator_pb2.RamDescription(description=res)
+        except ai_generators.GeminiCensorshipError:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
+
     @classmethod
     def serve(cls):
-        port = config.gRPC.PORT
+        port = config.GRPC.PORT
 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=30),
                              interceptors=[AuthInterceptor()])
