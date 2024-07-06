@@ -12,14 +12,14 @@ class GenerateStartPromptRequest(_message.Message):
     def __init__(self, user_prompt: _Optional[str] = ...) -> None: ...
 
 class GenerateHybridPromptRequest(_message.Message):
-    __slots__ = ("user_prompt", "ram_images")
+    __slots__ = ("user_prompt", "ram_descriptions")
     USER_PROMPT_FIELD_NUMBER: _ClassVar[int]
-    RAM_IMAGES_FIELD_NUMBER: _ClassVar[int]
+    RAM_DESCRIPTIONS_FIELD_NUMBER: _ClassVar[int]
     user_prompt: str
-    ram_images: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, user_prompt: _Optional[str] = ..., ram_images: _Optional[_Iterable[str]] = ...) -> None: ...
+    ram_descriptions: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, user_prompt: _Optional[str] = ..., ram_descriptions: _Optional[_Iterable[str]] = ...) -> None: ...
 
-class ImagePrompt(_message.Message):
+class RamImagePrompt(_message.Message):
     __slots__ = ("prompt",)
     PROMPT_FIELD_NUMBER: _ClassVar[int]
     prompt: str
@@ -33,8 +33,20 @@ class GenerateImageRequest(_message.Message):
     style: str
     def __init__(self, prompt: _Optional[str] = ..., style: _Optional[str] = ...) -> None: ...
 
-class GenerateImageResponse(_message.Message):
-    __slots__ = ("ram_image",)
-    RAM_IMAGE_FIELD_NUMBER: _ClassVar[int]
-    ram_image: str
-    def __init__(self, ram_image: _Optional[str] = ...) -> None: ...
+class RamImage(_message.Message):
+    __slots__ = ("image",)
+    IMAGE_FIELD_NUMBER: _ClassVar[int]
+    image: str
+    def __init__(self, image: _Optional[str] = ...) -> None: ...
+
+class RamImageUrl(_message.Message):
+    __slots__ = ("url",)
+    URL_FIELD_NUMBER: _ClassVar[int]
+    url: str
+    def __init__(self, url: _Optional[str] = ...) -> None: ...
+
+class RamDescription(_message.Message):
+    __slots__ = ("description",)
+    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
+    description: str
+    def __init__(self, description: _Optional[str] = ...) -> None: ...

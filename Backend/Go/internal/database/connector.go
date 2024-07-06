@@ -4,7 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq" // Импортируем драйвер PostgreSQL
+	"github.com/KalashnikovProjects/RamGenerator/internal/config"
+	_ "github.com/lib/pq"
+	"log"
+	"reflect"
+	"strings"
+	"time"
 )
 
 type SQLQueryExec interface {
@@ -29,11 +34,32 @@ type SQLTXQueryExec interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
-func GeneratePostgresConnectionString(user, password, host string, pgPort int, dbName string) string {
-	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s?sslmode=disable`, user, password, host, pgPort, dbName)
+// GenerateQueryAndArgsForUpdate генерирует строку запроса и аргументы для вставки
+// table - название таблицы
+// fields - хэш-мапа в формате поля в бд и значения для текущего запроса (если nil или default value оно игнорируется), пример:
+//
+//	 map[string]any{
+//			"username":           user.Username,
+//			"password_hash":      user.PasswordHash}
+//
+// condition - условие типа id=$1
+// conditionValues - список значений для условия в порядке из условия.
+func GenerateQueryAndArgsForUpdate(table string, fields map[string]any, condition string, conditionValues ...any) (string, []any) {
+	var updates []string
+	var args []any
+	for key, val := range fields {
+		if val != nil && !reflect.DeepEqual(val, reflect.Zero(reflect.TypeOf(val)).Interface()) {
+			updates = append(updates, fmt.Sprintf("%s = $%d", key, len(conditionValues)+len(updates)+1))
+			args = append(args, val)
+		}
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s", table, strings.Join(updates, ", "), condition)
+	return query, append(conditionValues, args...)
 }
 
 func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
+	conf := config.New()
+
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		fmt.Println(err)
@@ -41,27 +67,22 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	}
 
 	// Создание таблиц, если они не существуют
-	_, err = db.ExecContext(ctx, `
+	_, err = db.ExecContext(ctx, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS users (
 			id SERIAL PRIMARY KEY,
-			username varchar(24) UNIQUE NOT NULL,
+			username varchar(%d) UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
-			last_ram_generated INT,
-			avatar_ram_id INT,
-			avatar_box BOX 
-		                                 
+			last_ram_generated INT NOT NULL DEFAULT 0,
+			avatar_url TEXT NOT NULL,
+			avatar_box BOX NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS rams (
 		    id SERIAL PRIMARY KEY,
-		    name TEXT DEFAULT '',
+		    description TEXT NOT NULL DEFAULT '',
 		    image_url TEXT NOT NULL,
 		    user_id INT NOT NULL REFERENCES users (id)
 		);
-
-		ALTER TABLE users
-		ADD FOREIGN KEY (avatar_ram_id) REFERENCES rams(id);
-		
-	`)
+	`, conf.UsersConfig.MaxUsernameLen))
 	if err != nil {
 		return nil, err
 	}
@@ -70,4 +91,25 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func GeneratePostgresConnectionString(user, password, host string, pgPort int, dbName string) string {
+	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s?sslmode=disable`, user, password, host, pgPort, dbName)
+}
+
+func CreateDBConnectionContext(ctx context.Context) *sql.DB {
+	var db *sql.DB
+	var err error
+	conf := config.New()
+	connectionString := GeneratePostgresConnectionString(conf.Database.User, conf.Database.Password, conf.Database.Hostname, conf.Database.Port, conf.Database.DBName)
+	for {
+		db, err = OpenDb(ctx, connectionString)
+		if err == nil {
+			break
+		}
+		log.Print("retry db connection, error: ", err)
+		time.Sleep(2 * time.Second)
+	}
+	log.Print("successful connected to db")
+	return db
 }

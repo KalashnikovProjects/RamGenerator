@@ -1,38 +1,73 @@
 package config
 
 import (
+	"github.com/KalashnikovProjects/RamGenerator/internal/entities"
 	"os"
+	"strconv"
 )
 
 type GRPCConfig struct {
-	URL   string
-	Token string
+	Hostname string
+	Port     int
+	Token    string
 }
 
 type DatabaseConfig struct {
-	Host     string
+	Hostname string
+	Port     int
 	User     string
 	Password string
 	DBName   string
 }
 
-type Config struct {
-	GRPC     GRPCConfig
-	Database DatabaseConfig
+type UsersConfig struct {
+	DefaultAvatar          string
+	DefaultAvatarBox       *entities.Box
+	MaxUsernameLen         int // Это поле лучше лишний раз не трогать, возможно придётся мигрировать бд
+	TimeBetweenGenerations int // Время в часах
 }
 
-// New returns a new Config struct
+type ImageConfig struct {
+	DefaultKandinskyStyle string
+	FreeImageHostApiKey   string
+}
+
+type Config struct {
+	GRPC        GRPCConfig
+	Database    DatabaseConfig
+	UsersConfig UsersConfig
+	Image       ImageConfig
+}
+
+func toInt(str string) int {
+	res, _ := strconv.Atoi(str)
+	return res
+}
+
+// New возвращает заполненный Config
 func New() *Config {
 	return &Config{
 		GRPC: GRPCConfig{
-			URL:   getEnv("GRPC_URL", "localhost:50051"),
-			Token: getEnv("GRPC_SECRET_TOKEN", ""),
+			Hostname: getEnv("GRPC_HOSTNAME", "localhost"),
+			Port:     toInt(getEnv("GRPC_PORT", "50051")),
+			Token:    getEnv("GRPC_SECRET_TOKEN", ""),
 		},
 		Database: DatabaseConfig{
-			Host:     getEnv("POSTGRES_HOST", ""),
+			Hostname: getEnv("POSTGRES_HOSTNAME", "localhost"),
+			Port:     toInt(getEnv("POSTGRES_PORT", "5432")),
 			User:     getEnv("POSTGRES_USER", ""),
 			Password: getEnv("POSTGRES_PASSWORD", ""),
 			DBName:   getEnv("POSTGRES_DB", ""),
+		},
+		UsersConfig: UsersConfig{
+			DefaultAvatar:          "https://www.funnyart.club/uploads/posts/2023-02/1675548431_www-funnyart-club-p-smeshnoi-barashek-shutki-13.jpg",
+			DefaultAvatarBox:       &entities.Box{{20, 230}, {530, 760}},
+			MaxUsernameLen:         24, // Это поле лучше лишний раз не трогать, возможно придётся мигрировать бд
+			TimeBetweenGenerations: 20,
+		},
+		Image: ImageConfig{
+			DefaultKandinskyStyle: "DEFAULT",
+			FreeImageHostApiKey:   getEnv("FREE_IMAGE_HOST_API_KEY", ""),
 		},
 	}
 }

@@ -22,9 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RamGeneratorClient interface {
-	GenerateStartPrompt(ctx context.Context, in *GenerateStartPromptRequest, opts ...grpc.CallOption) (*ImagePrompt, error)
-	GenerateHybridPrompt(ctx context.Context, in *GenerateHybridPromptRequest, opts ...grpc.CallOption) (*ImagePrompt, error)
-	GenerateImage(ctx context.Context, in *GenerateImageRequest, opts ...grpc.CallOption) (*GenerateImageResponse, error)
+	GenerateStartPrompt(ctx context.Context, in *GenerateStartPromptRequest, opts ...grpc.CallOption) (*RamImagePrompt, error)
+	GenerateHybridPrompt(ctx context.Context, in *GenerateHybridPromptRequest, opts ...grpc.CallOption) (*RamImagePrompt, error)
+	GenerateImage(ctx context.Context, in *GenerateImageRequest, opts ...grpc.CallOption) (*RamImage, error)
+	GenerateDescription(ctx context.Context, in *RamImageUrl, opts ...grpc.CallOption) (*RamDescription, error)
 }
 
 type ramGeneratorClient struct {
@@ -35,8 +36,8 @@ func NewRamGeneratorClient(cc grpc.ClientConnInterface) RamGeneratorClient {
 	return &ramGeneratorClient{cc}
 }
 
-func (c *ramGeneratorClient) GenerateStartPrompt(ctx context.Context, in *GenerateStartPromptRequest, opts ...grpc.CallOption) (*ImagePrompt, error) {
-	out := new(ImagePrompt)
+func (c *ramGeneratorClient) GenerateStartPrompt(ctx context.Context, in *GenerateStartPromptRequest, opts ...grpc.CallOption) (*RamImagePrompt, error) {
+	out := new(RamImagePrompt)
 	err := c.cc.Invoke(ctx, "/ram_generator.RamGenerator/GenerateStartPrompt", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -44,8 +45,8 @@ func (c *ramGeneratorClient) GenerateStartPrompt(ctx context.Context, in *Genera
 	return out, nil
 }
 
-func (c *ramGeneratorClient) GenerateHybridPrompt(ctx context.Context, in *GenerateHybridPromptRequest, opts ...grpc.CallOption) (*ImagePrompt, error) {
-	out := new(ImagePrompt)
+func (c *ramGeneratorClient) GenerateHybridPrompt(ctx context.Context, in *GenerateHybridPromptRequest, opts ...grpc.CallOption) (*RamImagePrompt, error) {
+	out := new(RamImagePrompt)
 	err := c.cc.Invoke(ctx, "/ram_generator.RamGenerator/GenerateHybridPrompt", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -53,9 +54,18 @@ func (c *ramGeneratorClient) GenerateHybridPrompt(ctx context.Context, in *Gener
 	return out, nil
 }
 
-func (c *ramGeneratorClient) GenerateImage(ctx context.Context, in *GenerateImageRequest, opts ...grpc.CallOption) (*GenerateImageResponse, error) {
-	out := new(GenerateImageResponse)
+func (c *ramGeneratorClient) GenerateImage(ctx context.Context, in *GenerateImageRequest, opts ...grpc.CallOption) (*RamImage, error) {
+	out := new(RamImage)
 	err := c.cc.Invoke(ctx, "/ram_generator.RamGenerator/GenerateImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ramGeneratorClient) GenerateDescription(ctx context.Context, in *RamImageUrl, opts ...grpc.CallOption) (*RamDescription, error) {
+	out := new(RamDescription)
+	err := c.cc.Invoke(ctx, "/ram_generator.RamGenerator/GenerateDescription", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +76,10 @@ func (c *ramGeneratorClient) GenerateImage(ctx context.Context, in *GenerateImag
 // All implementations must embed UnimplementedRamGeneratorServer
 // for forward compatibility
 type RamGeneratorServer interface {
-	GenerateStartPrompt(context.Context, *GenerateStartPromptRequest) (*ImagePrompt, error)
-	GenerateHybridPrompt(context.Context, *GenerateHybridPromptRequest) (*ImagePrompt, error)
-	GenerateImage(context.Context, *GenerateImageRequest) (*GenerateImageResponse, error)
+	GenerateStartPrompt(context.Context, *GenerateStartPromptRequest) (*RamImagePrompt, error)
+	GenerateHybridPrompt(context.Context, *GenerateHybridPromptRequest) (*RamImagePrompt, error)
+	GenerateImage(context.Context, *GenerateImageRequest) (*RamImage, error)
+	GenerateDescription(context.Context, *RamImageUrl) (*RamDescription, error)
 	mustEmbedUnimplementedRamGeneratorServer()
 }
 
@@ -76,14 +87,17 @@ type RamGeneratorServer interface {
 type UnimplementedRamGeneratorServer struct {
 }
 
-func (UnimplementedRamGeneratorServer) GenerateStartPrompt(context.Context, *GenerateStartPromptRequest) (*ImagePrompt, error) {
+func (UnimplementedRamGeneratorServer) GenerateStartPrompt(context.Context, *GenerateStartPromptRequest) (*RamImagePrompt, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateStartPrompt not implemented")
 }
-func (UnimplementedRamGeneratorServer) GenerateHybridPrompt(context.Context, *GenerateHybridPromptRequest) (*ImagePrompt, error) {
+func (UnimplementedRamGeneratorServer) GenerateHybridPrompt(context.Context, *GenerateHybridPromptRequest) (*RamImagePrompt, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateHybridPrompt not implemented")
 }
-func (UnimplementedRamGeneratorServer) GenerateImage(context.Context, *GenerateImageRequest) (*GenerateImageResponse, error) {
+func (UnimplementedRamGeneratorServer) GenerateImage(context.Context, *GenerateImageRequest) (*RamImage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateImage not implemented")
+}
+func (UnimplementedRamGeneratorServer) GenerateDescription(context.Context, *RamImageUrl) (*RamDescription, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateDescription not implemented")
 }
 func (UnimplementedRamGeneratorServer) mustEmbedUnimplementedRamGeneratorServer() {}
 
@@ -152,6 +166,24 @@ func _RamGenerator_GenerateImage_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RamGenerator_GenerateDescription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RamImageUrl)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RamGeneratorServer).GenerateDescription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ram_generator.RamGenerator/GenerateDescription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RamGeneratorServer).GenerateDescription(ctx, req.(*RamImageUrl))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RamGenerator_ServiceDesc is the grpc.ServiceDesc for RamGenerator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var RamGenerator_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateImage",
 			Handler:    _RamGenerator_GenerateImage_Handler,
+		},
+		{
+			MethodName: "GenerateDescription",
+			Handler:    _RamGenerator_GenerateDescription_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

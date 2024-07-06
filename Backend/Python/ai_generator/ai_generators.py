@@ -2,17 +2,26 @@ import google.generativeai as genai
 
 from retry import retry
 
-import rate_limiters
-import config
+from . import rate_limiters
+from . import config
 
 import json
 import time
 import requests
 
 
+class GeminiCensorshipError(Exception):
+    pass
+
+
+class GeminiBugError(Exception):
+    pass
+
+
 class PromptGenerator:
     def __init__(self, api_key: str,
                  system_instructions: str,
+                 response_len: int = config.GEMINI.DEFAULT_RESPONSE_LEN,
                  model_name: str = config.GEMINI.MODEL,
                  safety_settings=None):
 
@@ -22,7 +31,7 @@ class PromptGenerator:
             model_name=model_name,
             safety_settings=safety_settings,
             system_instruction=system_instructions,
-            generation_config=genai.GenerationConfig(candidate_count=1)
+            generation_config=genai.GenerationConfig(candidate_count=1, max_output_tokens=response_len // 4)
         )
 
     @retry(tries=3, delay=2)
@@ -30,7 +39,11 @@ class PromptGenerator:
     def generate(self, text: str, images: list[dict[str, bytes | str]] = None) -> str:
         inp = [text, *images] if images else text
         res = self.model.generate_content(inp)
-
+        if not res.parts:
+            if res.candidates[0].finish_reason == 3:
+                raise GeminiCensorshipError
+            else:
+                raise GeminiBugError
         return res.text.strip()
 
 
@@ -51,11 +64,12 @@ class ImageGenerator:
         data = response.json()
         return data[0]['id']
 
-    def generate(self, prompt, model, images=1, width=1024, height=1024):
-        # TODO: добавить style
+    def generate(self, prompt, style, model, images=1, width=1024, height=1024):
         params = {
             "type": "GENERATE",
+            "style": style,
             "numImages": images,
+            "negativePromptUnclip": config.PROMPTS.IMAGE_NEGATIVE_PROMPT,
             "width": width,
             "height": height,
             "generateParams": {
