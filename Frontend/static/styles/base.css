@@ -1,0 +1,64 @@
+body {
+    background-image: url("/static/img/background2.jpg");
+    background-size: cover;
+}
+
+@media (min-width: 1000px) {
+    .index-right-texts {
+        margin-top: 5rem;
+    }
+}
+
+@media (min-width: 1000px) {
+    .index-start-section {
+        margin-top: 5rem!important;
+    }
+}
+
+
+.big-text4 {
+    font-size: 6em;
+    font-weight: 400;
+}
+
+.big-text3 {
+    font-size: 4em;
+    font-weight: lighter;
+}
+
+a.tap-text {
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+    text-shadow: white 1px 0 10px;
+}
+
+.future-image {
+    margin: 1em;
+    object-fit: scale-down;
+    height: 50vh;
+    border-radius: 2em;
+}
+
+@media (min-width: 1400px) {
+    .future-image {
+        float: right;
+        margin: 3em 7em 3em 3em;
+    }
+}
+
+@media (max-width: 768px) {
+    .future-image {
+        display: none;
+    }
+}
+
+@media (min-width: 1000px) {
+    .row {
+        margin-top: 10rem;
+    }
+}
+
+.ram-icon {
+    margin: 5px;
+}

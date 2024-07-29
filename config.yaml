@@ -1,0 +1,47 @@
+version: 3.0
+
+ports:
+  go_static_server: 8081
+  go_api: 8082
+
+prompts:
+  base_start_prompt: 'Ты пишешь промты для генерации баранов с помощью нейросети Kandinsky на основе запроса
+пользователя. Ты не имеешь право задавать в промпте параметры чего-либо кроме внешнего
+вида барана. Помимо требований пользователя ты должен добавить
+от себя 1 случайный признак для барана. (мутацию)'
+  base_hybrid_prompt: 'Ты пишешь промт для нейросети Kandinsky на основе запроса пользователя и описания баранов в стаде. 
+Нейросеть для генерации изображений рисует различных баранов, ты не имеешь право задавать в промпте параметры чего-либо кроме внешнего 
+вида барана. Ты пишешь промпт на основе запроса пользователя и в большей степени на основе описания других его баранов, ты должен добавить ровно
+1 случайный признак от себя (мутацию), всё остальное на основе запроса или других баранов.'
+  base_image_prompt: "баран, лужайка на фоне, ясная погода, баран на переднем плане, "
+  negative_image_prompt: "яркие цвета, кислотность, высокая контрастность"
+  base_description_prompt: "Напиши максимально кратное описание барана на этом изображении (не более 6 слов)."
+
+clicks:
+  first_ram: 100
+  daily_rams_prices:
+    - 200
+    - 500
+
+gemini:
+  model: "models/gemini-1.5-flash-latest"
+  rate_limit: 15
+  default_response_length: 50
+  proxy: true
+  proxy_endpoint: "cheery-baklava-3e2f26.netlify.app"
+  proxy_transport: "rest"
+
+users:
+  default_avatar: "https://www.funnyart.club/uploads/posts/2023-02/1675548431_www-funnyart-club-p-smeshnoi-barashek-shutki-13.jpg"
+  default_avatar_box:
+    - [20, 230]
+    - [530, 760]
+  max_username_len: 24
+  time_between_generations: 20
+
+image:
+  kandinsky_endpoint: "https://api-key.fusionbrain.ai/"
+  default_kandinsky_style: "DEFAULT"
+
+frontend:
+  api_url: "https://localhost:8081/"
