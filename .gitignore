@@ -1,5 +1,6 @@
 .env
 VE
-Backend/.idea
-Backend/Python/tests/my_tests.py
+Backend/Go-api/.idea
+Backend/Go-static-server/.idea
+Backend/Python-ai/tests/my_tests.py
 .idea
