@@ -140,3 +140,29 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// Me возвращает информацию о пользователе, владельце токена из Authorization
+func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	dbUser, err := database.GetUserContext(ctx, h.db, ctx.Value("userId").(int))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
+		return
+	}
+	dbUser.PasswordHash = ""
+	dbUser.Password = ""
+	res, err := json.Marshal(dbUser)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(res)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("response writing error"), http.StatusInternalServerError)
+		return
+	}
+}
