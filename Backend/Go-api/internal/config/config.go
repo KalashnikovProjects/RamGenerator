@@ -56,11 +56,17 @@ type ClicksConfig struct {
 	DailyRamsPrices []int `yaml:"daily_rams_prices"`
 }
 
+type WebsocketConfig struct {
+	PingPeriod int `yaml:"ping_period"`
+	PongWait   int `yaml:"pong_wait"`
+}
+
 type SettingsConfig struct {
-	Users  UsersConfig  `yaml:"users"`
-	Image  ImageConfig  `yaml:"image"`
-	Ports  PortsConfig  `yaml:"ports"`
-	Clicks ClicksConfig `yaml:"clicks"`
+	Users     UsersConfig     `yaml:"users"`
+	Image     ImageConfig     `yaml:"image"`
+	Ports     PortsConfig     `yaml:"ports"`
+	Clicks    ClicksConfig    `yaml:"clicks"`
+	Websocket WebsocketConfig `yaml:"websocket"`
 }
 
 type Config struct {

@@ -43,5 +43,9 @@ image:
   kandinsky_endpoint: "https://api-key.fusionbrain.ai/"
   default_kandinsky_style: "DEFAULT"
 
+websocket:
+  ping_period: 20
+  pong_wait:   30
+
 frontend:
   api_url: "https://localhost:8081/"

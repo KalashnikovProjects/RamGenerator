@@ -22,6 +22,7 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 
 	router.Handle("/api/register", http.HandlerFunc(handlers.Register)).Methods("GET", "POST")
 	router.Handle("/api/login", http.HandlerFunc(handlers.Login)).Methods("GET", "POST")
+	router.Handle("/api/me", http.HandlerFunc(handlers.Me)).Methods("GET", "POST")
 
 	// Для всех кроме GET запросов нужна авторизация
 	router.Handle("/api/users/{username}", http.HandlerFunc(handlers.GetUser)).Methods("GET")

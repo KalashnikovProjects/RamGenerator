@@ -45,6 +45,28 @@ func validateClickData(clicks int, lastClicks time.Time) bool {
 	return true
 }
 
+func PingOrCancelContext(ctx context.Context, ws *websocket.Conn, cancel func()) {
+	ticker := time.NewTicker(time.Second * time.Duration(config.Conf.Websocket.PingPeriod))
+
+	ws.SetPongHandler(func(string) error {
+		ws.SetReadDeadline(time.Now().Add(time.Second * time.Duration(config.Conf.Websocket.PongWait)))
+		return nil
+	})
+
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+				cancel()
+			}
+		}
+	}
+}
+
 func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, amount int) error {
 	var clicked int
 	lastClicks := time.Now().Add(-1 * time.Minute)
@@ -52,6 +74,7 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 	for {
 		select {
 		case <-ctx.Done():
+			ws.WriteJSON(map[string]string{"error": "context canceled"})
 			return ctx.Err()
 		default:
 			messageType, wsMessage, err := ws.ReadMessage()
@@ -126,6 +149,10 @@ func (h *Handlers) WebsocketClicker(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.Conn, ramId int) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	PingOrCancelContext(ctx, ws, cancel)
+
 	var clicked int
 	defer func() {
 		if clicked == 0 {
@@ -138,6 +165,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 	for {
 		select {
 		case <-ctx.Done():
+			ws.WriteJSON(map[string]string{"error": "context canceled"})
 			return
 		default:
 			messageType, wsMessage, err := ws.ReadMessage()
@@ -200,7 +228,9 @@ func (h *Handlers) WebsocketCreateRam(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket.Conn, user entities.User) {
 	defer ws.Close()
-	ws.SetReadDeadline(time.Now().Add(600 * time.Second))
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	PingOrCancelContext(ctx, ws, cancel)
 
 	messageType, wsMessage, err := ws.ReadMessage()
 	if err != nil {
@@ -249,15 +279,24 @@ func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket
 		ws.WriteJSON(map[string]string{"error": fmt.Sprintf("image generating error")})
 		return
 	}
+
+	var needClicks int
 	if user.DailyRamGenerationTime == 0 {
-		h.websocketNeedClicks(ctx, ws, config.Conf.Clicks.FirstRam)
+		needClicks = config.Conf.Clicks.FirstRam
 	} else {
 		if user.RamsGeneratedLastDay >= len(config.Conf.Clicks.DailyRamsPrices) {
 			ws.WriteJSON(map[string]string{"error": fmt.Sprintf("you can generate only %d rams per day", len(config.Conf.Clicks.DailyRamsPrices))})
 			return
 		}
-		h.websocketNeedClicks(ctx, ws, config.Conf.Clicks.DailyRamsPrices[user.RamsGeneratedLastDay])
+		needClicks = config.Conf.Clicks.DailyRamsPrices[user.RamsGeneratedLastDay]
+
 	}
+	err = h.websocketNeedClicks(ctx, ws, needClicks)
+	if err != nil {
+		ws.WriteJSON(map[string]string{"error": fmt.Sprintf("clicks timeout")})
+		return
+	}
+
 	ws.WriteMessage(websocket.TextMessage, []byte("generating image"))
 
 	imageUrl, err := ram_image_generator.UploadImage(imageBase64)
