@@ -84,7 +84,6 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 	// return
-	log.Println(user.Username, user.Id)
 	token, err := auth.GenerateToken(user.Id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("token generation error"), http.StatusInternalServerError)

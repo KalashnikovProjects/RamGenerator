@@ -5,6 +5,7 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/database"
 	pb "github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/proto_generated"
 	"github.com/didip/tollbooth"
+	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"golang.org/x/sync/errgroup"
 	"log"
@@ -22,9 +23,8 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 
 	router.Handle("/api/register", http.HandlerFunc(handlers.Register)).Methods("GET", "POST")
 	router.Handle("/api/login", http.HandlerFunc(handlers.Login)).Methods("GET", "POST")
-	router.Handle("/api/me", http.HandlerFunc(handlers.Me)).Methods("GET", "POST")
+	router.Handle("/api/me", AuthorizationMiddleware(http.HandlerFunc(handlers.Me))).Methods("GET", "POST")
 
-	// Для всех кроме GET запросов нужна авторизация
 	router.Handle("/api/users/{username}", http.HandlerFunc(handlers.GetUser)).Methods("GET")
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.PutPatchUser))).Methods("PUT", "PATCH")
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.DeleteUser))).Methods("DELETE")
@@ -43,17 +43,15 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 	// router.HandleFunc("/api/ws/trade", handlers.TradeWebsocket)
 
 	log.Printf("API running on localhost%s\n", Addr)
-
-	// Пока-что выключу
-	//corsHandler := handlers.CORS(
-	//	handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
-	//	handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-	//	handlers.AllowedOrigins([]string{"*"}),
-	//	handlers.AllowCredentials(),
-	//)
+	corsHandler := gorillaHandlers.CORS(
+		gorillaHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}),
+		gorillaHandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+		gorillaHandlers.AllowedOrigins([]string{"*"}),
+		gorillaHandlers.AllowCredentials(),
+	)
 	httpServer := &http.Server{
 		Addr:    Addr,
-		Handler: tollbooth.LimitHandler(tollbooth.NewLimiter(50, nil), router),
+		Handler: corsHandler(tollbooth.LimitHandler(tollbooth.NewLimiter(50, nil), router)),
 	}
 
 	return httpServer

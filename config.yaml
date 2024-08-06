@@ -32,7 +32,7 @@ gemini:
   proxy_transport: "rest"
 
 users:
-  default_avatar: "https://www.funnyart.club/uploads/posts/2023-02/1675548431_www-funnyart-club-p-smeshnoi-barashek-shutki-13.jpg"
+  default_avatar: "/static/img/default-avatar.png"
   default_avatar_box:
     - [20, 230]
     - [530, 760]
@@ -48,4 +48,4 @@ websocket:
   pong_wait:   30
 
 frontend:
-  api_url: "https://localhost:8081/"
+  api_url: "http://localhost:8082/api"

@@ -15,7 +15,6 @@ var Conf *Config
 
 type GRPCConfig struct {
 	Hostname string
-	Port     int
 	Token    string
 }
 
@@ -90,8 +89,7 @@ func InitConfigs() {
 	}
 	secrets := SecretConfig{
 		GRPC: GRPCConfig{
-			Hostname: getEnv("GRPC_HOSTNAME", "localhost"),
-			Port:     toInt(getEnv("GRPC_PORT", "50051")),
+			Hostname: getEnv("GRPC_HOSTNAME", "localhost:50051"),
 			Token:    getEnv("GRPC_SECRET_TOKEN", ""),
 		},
 		Database: DatabaseConfig{

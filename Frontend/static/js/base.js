@@ -1,0 +1,90 @@
+var user
+
+async function loadAvatar(username, ramId) {
+    if (ramId === 0) {
+        return DEFAULT_AVATAR
+    }
+    const response = await fetch(`${API_URL}/users/${username}/${ramId}`, {
+        mode: 'cors',
+        method: 'GET',
+    });
+
+    if (response.ok) {
+        let ram = await response.json();
+        return ram.image_url
+    } else {
+        const errorText = await response.text();
+        console.error('Error response:', response.status, errorText);
+        return DEFAULT_AVATAR
+    }
+}
+
+async function loadUser() {
+    try {
+        const token = getCookie("token");
+        if (!token) {
+            user = null
+            return user
+        }
+
+        user = sessionStorage.getItem("user");
+        if (!!user) {
+            user = JSON.parse(user)
+            return user
+        }
+
+        const response = await fetch(`${API_URL}/me`, {
+            mode: 'cors',
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+        });
+
+        if (response.ok) {
+            user = await response.json();
+            user.avatar_url = await loadAvatar(user.username, user.avatar_ram_id);
+            sessionStorage.setItem("user", JSON.stringify(user));
+            return user
+        } else {
+            const errorText = await response.text();
+            console.error('Error response:', response.status, errorText);
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+}
+
+function logOut() {
+    sessionStorage.removeItem("user");
+    deleteCookie("token");
+    window.location.reload();
+
+}
+
+var loadingUser = true
+loadUser().then(
+    () => {
+        loadingUser = false
+    }
+)
+
+function displayUser() {
+    if(loadingUser) {
+        setTimeout(displayUser, 5);
+        return;
+    }
+
+    if (!user) {
+        document.querySelector("#userBox").innerHTML = `<a id="user" type="button" class="user btn btn-outline-secondary me-2" onclick="location.href='/login'" >Login</a>`
+    }
+    document.querySelector("#userBox").innerHTML = `<a id="user" class="user" onclick="location.href='/users/${user.username}'">
+    <img src="${user.avatar_url}" class="user-avatar" height="35em" alt=""> ${user.username}</a>
+    <span onclick="logOut()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
+        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+        </svg>
+    </span>`
+}

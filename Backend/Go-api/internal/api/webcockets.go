@@ -38,7 +38,7 @@ func validateClickData(clicks int, lastClicks time.Time) bool {
 		return false
 	}
 
-	if clicks > int(55*timeSub.Seconds()) {
+	if clicks > int(40*timeSub.Seconds()) {
 		return false
 	}
 

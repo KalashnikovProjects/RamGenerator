@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure" // Для упрощения не будем использовать SSL/TLS аутентификация
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
@@ -32,11 +33,22 @@ type imageUploadApiResponse struct {
 	Image      imageUploadApiResponseImage `json:"image"`
 }
 
+func AuthInterceptor(token string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
 func CreateGRPCConnection() pb.RamGeneratorClient {
 	var conn *grpc.ClientConn
 	var err error
 	for {
-		conn, err = grpc.NewClient(fmt.Sprintf("%s:%d", config.Conf.GRPC.Hostname, config.Conf.GRPC.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err = grpc.NewClient(
+			fmt.Sprintf("%s", config.Conf.GRPC.Hostname),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(AuthInterceptor(config.Conf.GRPC.Token)),
+		)
 		if err == nil {
 			break
 		}
