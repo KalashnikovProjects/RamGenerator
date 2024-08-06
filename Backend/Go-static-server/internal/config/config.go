@@ -12,8 +12,9 @@ import (
 var Conf *Config
 
 type Config struct {
-	ApiUrl string
-	Port   int
+	ApiUrl        string
+	Port          int
+	DefaultAvatar string
 
 	RootPath      string
 	TemplatesPath string
@@ -27,7 +28,10 @@ type yamlConfigData struct {
 	} `yaml:"frontend"`
 	Ports struct {
 		GoStaticServer int `yaml:"go_static_server"`
-	}
+	} `yaml:"ports"`
+	Users struct {
+		DefaultAvatar string `yaml:"default_avatar"`
+	} `yaml:"users"`
 }
 
 func InitConfigs() {
@@ -47,6 +51,7 @@ func InitConfigs() {
 	Conf = &Config{
 		ApiUrl:        configData.Frontend.ApiUrl,
 		Port:          configData.Ports.GoStaticServer,
+		DefaultAvatar: configData.Users.DefaultAvatar,
 		RootPath:      rootPath,
 		TemplatesPath: fmt.Sprintf("%s/Frontend/templates", rootPath),
 		CdnFilesPath:  fmt.Sprintf("%s/Frontend/static", rootPath),

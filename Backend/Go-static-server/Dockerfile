@@ -15,7 +15,7 @@ COPY --from=builder /app/Backend/Go-static-server/compiled /app/Backend/Go-stati
 COPY --from=builder /app/Frontend /app/Frontend
 COPY --from=builder /app/config.yaml /app/config.yaml
 
-ENV ROOT_PATH app
+ENV ROOT_PATH=app
 EXPOSE 8081
 
 ENTRYPOINT ["/app/Backend/Go-static-server/compiled"]

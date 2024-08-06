@@ -1,0 +1,58 @@
+
+.big-text4 {
+    font-size: 6rem;
+    font-weight: 400;
+}
+
+.big-text3 {
+    font-size: 4rem;
+    font-weight: lighter;
+}
+
+a.tap-text {
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+    text-shadow: white 1px 0 10px;
+}
+
+.future-image {
+    margin: 1em;
+    object-fit: scale-down;
+    height: 45vh;
+    border-radius: 1rem;
+}
+
+@media (min-width: 1200px) {
+    .future-image {
+        float: right;
+        margin: 5rem 7em 0 3em;
+    }
+}
+
+@media (min-width: 1200px) {
+    .index-right-texts {
+        margin-top: 5rem;
+    }
+    .index-start-section {
+        margin-top: 5rem!important;
+    }
+}
+
+@media (max-width: 767px) {
+    .future-image {
+        display: none;
+    }
+}
+
+@media (min-width: 1000px) {
+    .row {
+        margin-top: 10rem;
+    }
+}
+
+@media (min-width: 500px) {
+    header {
+        width: 80vw;
+    }
+}

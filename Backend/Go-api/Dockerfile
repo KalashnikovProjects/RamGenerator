@@ -13,7 +13,7 @@ FROM scratch
 COPY --from=builder /app/Backend/Go-api/compiled /app/Backend/Go-api/compiled
 COPY --from=builder /app/config.yaml /app/config.yaml
 
-ENV ROOT_PATH app
+ENV ROOT_PATH=app
 EXPOSE 8082
 
 ENTRYPOINT ["/app/Backend/Go-api/compiled"]

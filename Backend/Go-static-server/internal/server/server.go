@@ -12,8 +12,9 @@ import (
 )
 
 type TemplateData struct {
-	Title  string
-	ApiUrl string
+	Title         string
+	ApiUrl        string
+	DefaultAvatar string
 }
 
 func Run() {
@@ -40,7 +41,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("Ram Generator"), ApiUrl: config.Conf.ApiUrl})
+	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -55,7 +56,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("%s - Ram Generator", vars["username"]), ApiUrl: config.Conf.ApiUrl})
+	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("%s - Ram Generator", vars["username"]), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -69,7 +70,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: "Ram Generator", ApiUrl: config.Conf.ApiUrl})
+	err = ts.Execute(w, TemplateData{Title: "Ram Generator", ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -83,7 +84,7 @@ func ErrorPage404(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), ApiUrl: config.Conf.ApiUrl})
+	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return

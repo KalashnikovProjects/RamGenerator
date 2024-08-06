@@ -1,7 +1,9 @@
 import logging
+import mimetypes
 from concurrent import futures
 
 import grpc
+import requests
 
 from . import ai_generators
 from . import config
@@ -91,7 +93,18 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
                                                   safety_settings=config.GEMINI.safety_settings,
                                                   system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT)
         try:
-            res = generator.generate("Напиши описание для изображения барана", [{"file_uri": request.url}])
+            try:
+                req = requests.get(request.url)
+                image = req.content
+                mimetype = mimetypes.guess_type(request.url)[0]
+            except Exception as e:
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"Image downloading error: {str(e)}")
+                return
+            res = generator.generate("Напиши описание для изображения барана", [{
+                "mime_type": mimetype,
+                "data": image
+            }])
+
             return ram_generator_pb2.RamDescription(description=res)
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")
