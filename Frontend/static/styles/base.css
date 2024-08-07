@@ -18,23 +18,46 @@ body {
     margin-right: auto!important;
 }
 
-.user {
-    display: inline-block;
+.user-avatar {
+    margin-right: 0.4rem;
+    border-radius: 0.5rem;
+}
+
+.user, .login-account {
+    display: inline-flex;
+    align-items: center;
     border-radius: 3rem;
-    cursor: pointer;
     border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+}
+
+.user:hover, .login-account:hover {
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.login-account {
     padding: 0.5rem 1rem;
-    line-height: 1.5rem;
     color: white;
     text-decoration: none;
 }
 
-.user:hover {
-    background-color: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.5);
-
+.user-account {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 0.3rem 0.6rem 1rem;
+    border-right: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    text-decoration: none;
 }
 
-.user-avatar {
+.logout {
+    padding: 0.3rem;
+}
 
+.tap-text {
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+    text-shadow: white 1px 0 10px;
 }

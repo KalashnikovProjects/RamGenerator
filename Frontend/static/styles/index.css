@@ -9,13 +9,6 @@
     font-weight: lighter;
 }
 
-a.tap-text {
-    font-weight: 800;
-    color: white;
-    text-decoration: none;
-    text-shadow: white 1px 0 10px;
-}
-
 .future-image {
     margin: 1em;
     object-fit: scale-down;

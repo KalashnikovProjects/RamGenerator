@@ -34,8 +34,8 @@ gemini:
 users:
   default_avatar: "/static/img/default-avatar.png"
   default_avatar_box:
-    - [20, 230]
-    - [530, 760]
+    - [0.05, 0.25]
+    - [0.55, 0.75]
   max_username_len: 24
   time_between_generations: 20
 
