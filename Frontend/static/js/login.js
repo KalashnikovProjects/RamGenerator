@@ -30,8 +30,7 @@ async function handleServerResponse(response, successCallback, errorElementId) {
     if (response.ok) {
         setCookie("token", text, {samesite: "lax"});
         sessionStorage.removeItem("user")
-        loadUser()
-        successCallback();
+        successCallback(await loadUser());
     } else {
         console.log(response, text);
         let errorText;
@@ -97,7 +96,9 @@ function handleLogin(event) {
     }
 
     sendRequest(`${API_URL}/login`, { username, password },
-        () => { window.location.href = new URLSearchParams(window.location.search).get('redirect') ?? '/'; },
+        (user) => {
+            window.location.href = `/users/${user.username}`;
+        },
         LOGIN_ERROR_ELEMENT_ID
     );
 }
@@ -121,7 +122,9 @@ function handleRegister(event) {
     }
 
     sendRequest(`${API_URL}/register`, { username, password },
-        () => { window.location.href = new URLSearchParams(window.location.search).get('redirect') ?? '/'; },
+        (user) => {
+            window.location.href = new URLSearchParams(window.location.search).get('redirect') ?? `/users/${user.username}`;
+        },
         REGISTER_ERROR_ELEMENT_ID
     );
 }
