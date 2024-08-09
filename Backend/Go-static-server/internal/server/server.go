@@ -17,6 +17,11 @@ type TemplateData struct {
 	DefaultAvatar string
 }
 
+type ErrorTemplateData struct {
+	ErrorText string
+	TemplateData
+}
+
 func Run() {
 	router := mux.NewRouter()
 
@@ -24,6 +29,7 @@ func Run() {
 
 	router.HandleFunc("/", Index)
 	router.HandleFunc("/users/{username}", User)
+
 	router.HandleFunc("/login", Login)
 
 	router.HandleFunc("/favicon.ico", faviconHandler)
@@ -78,13 +84,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func ErrorPage404(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "404.html"))
+	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "error.html"))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
+	err = ts.Execute(w, ErrorTemplateData{ErrorText: "Такой страницы не существует", TemplateData: TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar}})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
