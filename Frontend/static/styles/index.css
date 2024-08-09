@@ -43,9 +43,3 @@
         margin-top: 10rem;
     }
 }
-
-@media (min-width: 500px) {
-    header {
-        width: 80vw;
-    }
-}
