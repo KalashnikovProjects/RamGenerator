@@ -65,10 +65,11 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	}
 
 	// Создание таблиц, если они не существуют
-	_, err = db.ExecContext(ctx, fmt.Sprintf(`
+	_, err = db.ExecContext(ctx, `
+		CREATE EXTENSION IF NOT EXISTS CITEXT;
 		CREATE TABLE IF NOT EXISTS users (
 			id 						  SERIAL PRIMARY KEY,
-			username 				  varchar(%d) UNIQUE NOT NULL,
+			username 				  CITEXT UNIQUE NOT NULL,
 			password_hash 			  TEXT NOT NULL,
 			daily_ram_generation_time INT  NOT NULL DEFAULT 0,
 			rams_generated_last_day   INT  NOT NULL DEFAULT 0,
@@ -82,7 +83,7 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 		    image_url   TEXT NOT NULL,
 		    user_id 	INT  NOT NULL REFERENCES users (id)
 		);
-	`, config.Conf.Users.MaxUsernameLen))
+	`)
 	if err != nil {
 		return nil, err
 	}
