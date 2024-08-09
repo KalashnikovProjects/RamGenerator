@@ -26,7 +26,7 @@ func GetRamsByUsernameContext(ctx context.Context, db SQLQueryExec, username str
 	if err != nil {
 		return nil, err
 	}
-	var res []entities.Ram
+	res := make([]entities.Ram, 0)
 	defer rows.Close()
 	for rows.Next() {
 		ram := entities.Ram{}
@@ -46,7 +46,7 @@ func GetRamsByUserIdContext(ctx context.Context, db SQLQueryExec, userId int) ([
 	if err != nil {
 		return nil, err
 	}
-	var res []entities.Ram
+	res := make([]entities.Ram, 0)
 	for rows.Next() {
 		ram := entities.Ram{}
 		err := rows.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId)
