@@ -23,7 +23,7 @@ body {
     border-radius: 0.5rem;
 }
 
-.user, .login-account {
+.header-button, .login-account {
     display: inline-flex;
     align-items: center;
     border-radius: 3rem;
@@ -31,7 +31,7 @@ body {
     cursor: pointer;
 }
 
-.user:hover, .login-account:hover {
+.header-button:hover, .login-account:hover {
     background-color: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.5);
 }
@@ -60,4 +60,49 @@ body {
     color: white;
     text-decoration: none;
     text-shadow: white 1px 0 10px;
+}
+
+@media (min-width: 500px) {
+    header {
+        width: 80vw;
+    }
+}
+
+.search-box {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    height: 2.7rem;
+    border-radius: 40px;
+    padding: 10px;
+
+}
+
+.active-search-box > label > .search-input {
+    width: 200px;
+    padding: 0 6px;
+}
+
+.search-button {
+    margin-top: 0.375rem;
+    cursor: pointer;
+}
+
+.search-input {
+    border:none;
+    background: none;
+    outline:none;
+    float:left;
+    padding: 0;
+    color: white;
+    font-size: 16px;
+    transition: 0.4s;
+    line-height: 40px;
+    width: 0px;
+}
+
+@media screen and (max-width: 620px) {
+    .active-search-box > .search-input {
+        width: 100px;
+        padding: 0 6px;
+    }
 }

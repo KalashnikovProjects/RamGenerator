@@ -77,7 +77,7 @@ function displayUser() {
     }
 
     if (!user) {
-        document.querySelector("#userBox").innerHTML = `<a id="user" class="login-account me-2" onclick="location.href='/login'" >Login</a>`
+        document.getElementById("user-box").innerHTML = `<a id="user" class="login-account me-2" onclick="location.href='/login'" >Login</a>`
         return;
     }
 
@@ -92,8 +92,8 @@ function displayUser() {
     background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
     background-image: url(${user.avatar_url});
     `
-    document.querySelector("#userBox").innerHTML = `
-    <div class="user">
+    document.getElementById("user-box").innerHTML = `
+    <div class="header-button">
     <a class="user-account" href="/users/${user.username}">
     <div class="user-avatar" style="${style}">
     </div>${user.username}</a>
@@ -104,4 +104,30 @@ function displayUser() {
         </svg>
     </div>
     </div>`
+}
+
+function listenSearch() {
+    const search = document.getElementById("search-box");
+
+    search.addEventListener("focusin", (event) => {
+        search.classList.add('active-search-box');
+        search.focus()
+    });
+
+    search.addEventListener("focusout", (event) => {
+        search.classList.remove('active-search-box');
+    });
+
+    const searchInput = document.getElementById('search-input');
+
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            location.href=`users/${searchInput.value}`;
+        }
+    });
+
+    searchInput.addEventListener('search', function(event) {
+        location.href=`users/${searchInput.value}`;
+    });
 }
