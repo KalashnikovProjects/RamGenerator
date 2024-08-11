@@ -62,11 +62,6 @@ body {
     text-shadow: white 1px 0 10px;
 }
 
-@media (min-width: 500px) {
-    header {
-        width: 80vw;
-    }
-}
 
 .search-box {
     margin-left: 1rem;
@@ -74,12 +69,15 @@ body {
     height: 2.7rem;
     border-radius: 40px;
     padding: 10px;
+}
 
+.search-box > label {
+    display: flex;
 }
 
 .active-search-box > label > .search-input {
-    width: 200px;
-    padding: 0 6px;
+    max-width: 80vw;
+    width: 180px;
 }
 
 .search-button {
@@ -100,9 +98,21 @@ body {
     width: 0px;
 }
 
-@media screen and (max-width: 620px) {
-    .active-search-box > .search-input {
-        width: 100px;
-        padding: 0 6px;
+.header-right {
+    flex-wrap: wrap;
+}
+
+@media (min-width: 500px) {
+    header {
+        width: 80vw;
+    }
+}
+
+@media (max-width: 300px) {
+    .project-title {
+        font-size: 10px;
+    }
+    .ram-icon {
+        width: 20px;
     }
 }

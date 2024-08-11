@@ -77,7 +77,7 @@ function displayUser() {
     }
 
     if (!user) {
-        document.getElementById("user-box").innerHTML = `<a id="user" class="login-account me-2" onclick="location.href='/login'" >Login</a>`
+        document.getElementById("user-box").innerHTML = `<a id="user" class="login-account me-2" onclick="location.href='/login'" >Войти</a>`
         return;
     }
 
