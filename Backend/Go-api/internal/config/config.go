@@ -37,9 +37,10 @@ type SecretConfig struct {
 }
 
 type UsersConfig struct {
-	DefaultAvatarBox       entities.Box `yaml:"default_avatar_box"`
-	MaxUsernameLen         int          `yaml:"max_username_len"`
-	TimeBetweenGenerations int          `yaml:"time_between_generations"`
+	DefaultAvatarBox            entities.Box `yaml:"default_avatar_box"`
+	MaxUsernameLen              int          `yaml:"max_username_len"`
+	TimeBetweenDaily            int          `yaml:"time_between_daily"`
+	TimeBetweenDailyGenerations []int        `yaml:"time_between_daily_generations"`
 }
 
 type ImageConfig struct {
@@ -51,8 +52,8 @@ type PortsConfig struct {
 }
 
 type ClicksConfig struct {
-	FirstRam        int   `yaml:"first_ram"`
-	DailyRamsPrices []int `yaml:"daily_rams_prices"`
+	FirstRam  int   `yaml:"first_ram"`
+	DailyRams []int `yaml:"daily_rams"`
 }
 
 type WebsocketConfig struct {

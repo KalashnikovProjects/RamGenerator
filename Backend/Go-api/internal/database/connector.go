@@ -71,9 +71,12 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 			id 						  SERIAL PRIMARY KEY,
 			username 				  CITEXT UNIQUE NOT NULL,
 			password_hash 			  TEXT NOT NULL,
+			
 			daily_ram_generation_time INT  NOT NULL DEFAULT 0,
 			rams_generated_last_day   INT  NOT NULL DEFAULT 0,
-			avatar_ram_id 			  INT NOT NULL,
+			cant_generate_ram_until   INT  NOT NULL DEFAULT 0,
+			
+			avatar_ram_id 			  INT NOT NULL DEFAULT 0,
 			avatar_box 				  BOX  NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS rams (

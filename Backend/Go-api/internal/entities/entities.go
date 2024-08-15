@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type IdResponse struct {
@@ -11,14 +12,24 @@ type IdResponse struct {
 }
 
 type User struct {
-	Id                     int    `json:"-"`
-	Username               string `json:"username"`           // Максимум 24 символа
-	Password               string `json:"password,omitempty"` // В базе данных PasswordHash, Password только в запросах регистрации / входа, put user, patch user
-	PasswordHash           string `json:"-"`
-	DailyRamGenerationTime int    `json:"daily_ram_generation_time"` // Время генерации первого барана за день, UNIX формат, изменяется только при ws/create-ram
-	RamsGeneratedLastDay   int    `json:"rams_generated_last_day"`   // Изменяется только при ws/create-ram
-	AvatarRamId            int    `json:"avatar_ram_id"`
-	AvatarBox              *Box   `json:"avatar_box"`
+	Id           int    `json:"-"`
+	Username     string `json:"username"`           // Максимум 24 символа
+	Password     string `json:"password,omitempty"` // В базе данных PasswordHash, Password только в запросах регистрации / входа, put user, patch user
+	PasswordHash string `json:"-"`
+
+	DailyRamGenerationTime int `json:"daily_ram_generation_time"` // Время генерации первого барана за день, UNIX формат, изменяется только при ws/create-ram
+	RamsGeneratedLastDay   int `json:"rams_generated_last_day"`   // Изменяется только при ws/generate-ram
+	CantGenerateRamUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
+
+	AvatarRamId int  `json:"avatar_ram_id"`
+	AvatarBox   *Box `json:"avatar_box"`
+}
+
+func (u *User) CalculateRamsGeneratedLastDay(timeBetweenDaily int) int {
+	if u.DailyRamGenerationTime+timeBetweenDaily*60 < int(time.Now().Unix()) {
+		return 0
+	}
+	return u.RamsGeneratedLastDay
 }
 
 type Ram struct {

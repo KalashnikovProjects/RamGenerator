@@ -17,13 +17,21 @@ import (
 	"time"
 )
 
+// TODO: одна daily другая на second
 var (
-	errorGenerateRamRateLimit = errors.New("error generating ram: too many requests")
+	errorGenerateRamLimitExceed = errors.New("error generating ram: daily rams limit exceed")
+	errorGenerateRamWaitTime    = errors.New("error generating ram: too many requests")
 )
 
 type wsError struct {
 	Error string `json:"error"`
 	Code  int    `json:"code"`
+}
+
+type wsErrorRateLimit struct {
+	Error string `json:"error"`
+	Code  int    `json:"code"`
+	Next  int    `json:"next"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -136,14 +144,23 @@ func checkWsRamAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webso
 	return dbRam, nil
 }
 
-func checkWsUserGenerateRamRateLimit(ws *websocket.Conn, user entities.User) error {
-	if user.RamsGeneratedLastDay >= len(config.Conf.Clicks.DailyRamsPrices) {
-		ws.WriteJSON(wsError{fmt.Sprintf("you can generate only %d rams per day", len(config.Conf.Clicks.DailyRamsPrices)), 429})
-		return errorGenerateRamRateLimit
+func checkWsCanGenerateRam(ws *websocket.Conn, user entities.User) error {
+	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Users.TimeBetweenDaily)
+	if ramsGeneratedLastDay == 0 {
+		return nil
 	}
-	if user.DailyRamGenerationTime+config.Conf.Users.TimeBetweenGenerations*60 > int(time.Now().Unix()) {
-		ws.WriteJSON(wsError{fmt.Sprintf("you need to wait %d hours before generating a new ram", len(config.Conf.Clicks.DailyRamsPrices)), 429})
-		return errorGenerateRamRateLimit
+	if ramsGeneratedLastDay >= len(config.Conf.Clicks.DailyRams) {
+		targetTime := user.DailyRamGenerationTime + config.Conf.Users.TimeBetweenDaily*60
+		ws.WriteJSON(wsErrorRateLimit{fmt.Sprintf("you can generate only %d rams per day, you can generate next in %d (unix)", len(config.Conf.Clicks.DailyRams), targetTime), 429, targetTime})
+		return errorGenerateRamLimitExceed
+	}
+	targetTime := user.DailyRamGenerationTime
+	for _, t := range config.Conf.Users.TimeBetweenDailyGenerations[:ramsGeneratedLastDay] {
+		targetTime += t * 60
+	}
+	if targetTime > int(time.Now().Unix()) {
+		ws.WriteJSON(wsErrorRateLimit{fmt.Sprintf("you can generate next ram in %d (unix)", targetTime), 429, targetTime})
+		return errorGenerateRamWaitTime
 	}
 	return nil
 }
@@ -252,7 +269,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 	}
 }
 
-func (h *Handlers) WebsocketCreateRam(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) WebsocketGenerateRam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params := mux.Vars(r)
 
@@ -261,10 +278,10 @@ func (h *Handlers) WebsocketCreateRam(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed upgrade to websocket", http.StatusBadRequest)
 		return
 	}
-	h.upgradedWebsocketCreateRam(ctx, ws, params)
+	h.upgradedWebsocketGenerateRam(ctx, ws, params)
 }
 
-func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket.Conn, params map[string]string) {
+func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websocket.Conn, params map[string]string) {
 	defer ws.Close()
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
 	defer cancel()
@@ -277,10 +294,20 @@ func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket
 	if err != nil {
 		return
 	}
-	err = checkWsUserGenerateRamRateLimit(ws, user)
+	err = checkWsCanGenerateRam(ws, user)
 	if err != nil {
 		return
 	}
+
+	if err = database.UpdateUserCantGenerateRamUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ws.WriteJSON(wsError{"cant generate 2 rams parallel", 500})
+			return
+		}
+		ws.WriteJSON(wsError{"unexpected db error", 500})
+		return
+	}
+	defer database.UpdateUserContext(ctx, h.db, userId, entities.User{CantGenerateRamUntil: 0})
 
 	ctx = context.WithValue(ctx, "userId", userId)
 
@@ -351,14 +378,15 @@ func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket
 	}()
 
 	var needClicks int
+	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Users.TimeBetweenDaily)
 	if user.DailyRamGenerationTime == 0 {
 		needClicks = config.Conf.Clicks.FirstRam
 	} else {
-		if user.RamsGeneratedLastDay >= len(config.Conf.Clicks.DailyRamsPrices) {
-			ws.WriteJSON(wsError{fmt.Sprintf("you can generate only %d rams per day", len(config.Conf.Clicks.DailyRamsPrices)), 429})
+		if ramsGeneratedLastDay >= len(config.Conf.Clicks.DailyRams) {
+			ws.WriteJSON(wsError{fmt.Sprintf("you can generate only %d rams per day", len(config.Conf.Clicks.DailyRams)), 429})
 			return
 		}
-		needClicks = config.Conf.Clicks.DailyRamsPrices[user.RamsGeneratedLastDay]
+		needClicks = config.Conf.Clicks.DailyRams[ramsGeneratedLastDay]
 	}
 	err = h.websocketNeedClicks(ctx, ws, needClicks)
 	if err != nil {
@@ -380,7 +408,8 @@ func (h *Handlers) upgradedWebsocketCreateRam(ctx context.Context, ws *websocket
 		ws.WriteJSON(wsError{"unexpected db error", 500})
 		return
 	}
-	err = database.UpdateUserContext(ctx, tx, user.Id, entities.User{DailyRamGenerationTime: int(time.Now().Unix()), RamsGeneratedLastDay: user.RamsGeneratedLastDay + 1})
+
+	err = database.UpdateUserContext(ctx, tx, user.Id, entities.User{DailyRamGenerationTime: int(time.Now().Unix()), RamsGeneratedLastDay: ramsGeneratedLastDay + 1})
 	if err != nil {
 		tx.Rollback()
 		ws.WriteJSON(wsError{"unexpected db error", 500})
