@@ -169,8 +169,6 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 	var clicked int
 	lastClicks := time.Now().Add(-1 * time.Minute)
 
-	ws.WriteJSON(map[string]any{"status": "need clicks", "clicks": amount})
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -313,6 +311,12 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 
 	PingOrCancelContext(ctx, ws, cancel)
 
+	if user.DailyRamGenerationTime == 0 {
+		ws.WriteJSON(map[string]any{"status": "need first ram prompt"})
+	} else {
+		ws.WriteJSON(map[string]any{"status": "need ram prompt"})
+	}
+
 	messageType, wsMessage, err := ws.ReadMessage()
 	if err != nil {
 		ws.WriteJSON(wsError{"read message error", 400})
@@ -374,6 +378,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			ws.WriteJSON(wsError{"image description generating error", 500})
 			return
 		}
+		ws.WriteJSON(map[string]string{"status": "image generated"})
 		aiGeneratedRam <- entities.Ram{UserId: user.Id, Description: imageDescription, ImageUrl: imageUrl}
 	}()
 
@@ -388,15 +393,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		}
 		needClicks = config.Conf.Clicks.DailyRams[ramsGeneratedLastDay]
 	}
+	ws.WriteJSON(map[string]any{"status": "need clicks", "clicks": needClicks})
 	err = h.websocketNeedClicks(ctx, ws, needClicks)
+
 	if err != nil {
 		ws.WriteJSON(wsError{"clicks timeout", 408})
 		return
 	}
 
 	ram := <-aiGeneratedRam
-	ws.WriteJSON(map[string]string{"status": "image generated"})
-
 	tx, err := h.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		ws.WriteJSON(wsError{"unexpected db error", 500})
