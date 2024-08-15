@@ -50,7 +50,7 @@ func CreateUserContext(ctx context.Context, db SQLQueryExec, user entities.User)
 	}
 	var id int
 	query := `INSERT INTO users (username, password_hash, daily_ram_generation_time, rams_generated_last_day, cant_generate_ram_until, avatar_ram_id, avatar_box) 
-								VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+								VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	err := db.QueryRowContext(ctx, query,
 		user.Username, user.PasswordHash, user.DailyRamGenerationTime, user.RamsGeneratedLastDay, &user.CantGenerateRamUntil, user.AvatarRamId, avatarBox).Scan(&id)
 	return id, err
