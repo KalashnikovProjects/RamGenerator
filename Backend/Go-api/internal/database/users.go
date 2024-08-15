@@ -8,12 +8,12 @@ import (
 )
 
 func GetUserContext(ctx context.Context, db SQLQueryExec, id int) (entities.User, error) {
-	query := `SELECT id, username, password_hash, daily_ram_generation_time, rams_generated_last_day, avatar_ram_id, avatar_box FROM users
+	query := `SELECT id, username, password_hash, daily_ram_generation_time, rams_generated_last_day, cant_generate_ram_until, avatar_ram_id, avatar_box FROM users
 														WHERE id=$1`
 	row := db.QueryRowContext(ctx, query, id)
 	user := entities.User{}
 	var rawAvatarBox string
-	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.AvatarRamId, &rawAvatarBox)
+	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.CantGenerateRamUntil, &user.AvatarRamId, &rawAvatarBox)
 	if err != nil {
 		return entities.User{}, err
 	}
@@ -25,13 +25,13 @@ func GetUserContext(ctx context.Context, db SQLQueryExec, id int) (entities.User
 }
 
 func GetUserByUsernameContext(ctx context.Context, db SQLQueryExec, username string) (entities.User, error) {
-	query := `SELECT id, username, password_hash, daily_ram_generation_time, rams_generated_last_day, avatar_ram_id, avatar_box FROM users
+	query := `SELECT id, username, password_hash, daily_ram_generation_time, rams_generated_last_day, cant_generate_ram_until, avatar_ram_id, avatar_box FROM users
                                                         WHERE username=$1`
 	row := db.QueryRowContext(ctx, query, username)
 	user := entities.User{}
 	var rawAvatarBox string
 
-	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.AvatarRamId, &rawAvatarBox)
+	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.CantGenerateRamUntil, &user.AvatarRamId, &rawAvatarBox)
 	if err != nil {
 		return entities.User{}, err
 	}
@@ -49,10 +49,10 @@ func CreateUserContext(ctx context.Context, db SQLQueryExec, user entities.User)
 		avatarBox = user.AvatarBox.String()
 	}
 	var id int
-	query := `INSERT INTO users (username, password_hash, daily_ram_generation_time, rams_generated_last_day, avatar_ram_id, avatar_box) 
+	query := `INSERT INTO users (username, password_hash, daily_ram_generation_time, rams_generated_last_day, cant_generate_ram_until, avatar_ram_id, avatar_box) 
 								VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	err := db.QueryRowContext(ctx, query,
-		user.Username, user.PasswordHash, user.DailyRamGenerationTime, user.RamsGeneratedLastDay, user.AvatarRamId, avatarBox).Scan(&id)
+		user.Username, user.PasswordHash, user.DailyRamGenerationTime, user.RamsGeneratedLastDay, &user.CantGenerateRamUntil, user.AvatarRamId, avatarBox).Scan(&id)
 	return id, err
 }
 
@@ -67,6 +67,7 @@ func UpdateUserContext(ctx context.Context, db SQLQueryExec, id int, user entiti
 		"password_hash":             user.PasswordHash,
 		"daily_ram_generation_time": user.DailyRamGenerationTime,
 		"rams_generated_last_day":   user.RamsGeneratedLastDay,
+		"cant_generate_ram_until":   user.CantGenerateRamUntil,
 		"avatar_ram_id":             user.AvatarRamId,
 		"avatar_box":                avatarBox,
 	}
@@ -86,6 +87,7 @@ func UpdateUserByUsernameContext(ctx context.Context, db SQLQueryExec, username 
 		"password_hash":             user.PasswordHash,
 		"daily_ram_generation_time": user.DailyRamGenerationTime,
 		"rams_generated_last_day":   user.RamsGeneratedLastDay,
+		"cant_generate_ram_until":   user.CantGenerateRamUntil,
 		"avatar_ram_id":             user.AvatarRamId,
 		"avatar_box":                avatarBox,
 	}
@@ -141,4 +143,11 @@ func GetUserByRamIdContext(ctx context.Context, db SQLQueryExec, id int) (entiti
 		return entities.User{}, err
 	}
 	return GetUserContext(ctx, db, ram.UserId)
+}
+
+func UpdateUserCantGenerateRamUntilFieldIfItZero(ctx context.Context, db SQLQueryExec, id, cantGenerateRamUntil int) error {
+	query := "UPDATE users SET cant_generate_ram_until=$1 WHERE id=$2 AND cant_generate_ram_until=0 RETURNING id"
+	row := db.QueryRowContext(ctx, query, cantGenerateRamUntil, id)
+	var dbId int
+	return row.Scan(&dbId)
 }

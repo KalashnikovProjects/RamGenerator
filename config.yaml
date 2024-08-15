@@ -19,7 +19,7 @@ prompts:
 
 clicks:
   first_ram: 100
-  daily_rams_prices:
+  daily_rams:
     - 200
     - 500
 
@@ -37,7 +37,9 @@ users:
     - [0.05, 0.25]
     - [0.55, 0.75]
   max_username_len: 24
-  time_between_generations: 20
+  time_between_daily: 1200
+  time_between_daily_generations:
+    - 10
 
 image:
   kandinsky_endpoint: "https://api-key.fusionbrain.ai/"
