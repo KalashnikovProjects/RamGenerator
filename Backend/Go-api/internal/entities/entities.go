@@ -19,7 +19,7 @@ type User struct {
 
 	DailyRamGenerationTime int `json:"daily_ram_generation_time"` // Время генерации первого барана за день, UNIX формат, изменяется только при ws/create-ram
 	RamsGeneratedLastDay   int `json:"rams_generated_last_day"`   // Изменяется только при ws/generate-ram
-	CantGenerateRamUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
+	ClickersBlockedUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
 
 	AvatarRamId int  `json:"avatar_ram_id"`
 	AvatarBox   *Box `json:"avatar_box"`
