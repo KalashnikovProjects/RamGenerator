@@ -57,7 +57,7 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 		PasswordHash:           hashed,
 		DailyRamGenerationTime: 0,
 		RamsGeneratedLastDay:   0,
-		CantGenerateRamUntil:   0,
+		ClickersBlockedUntil:   0,
 		AvatarRamId:            0,
 		AvatarBox:              &config.Conf.Users.DefaultAvatarBox,
 	}

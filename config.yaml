@@ -46,8 +46,8 @@ image:
   default_kandinsky_style: "DEFAULT"
 
 websocket:
-  ping_period: 20
-  pong_wait:   30
+  ping_period: 3
+  pong_wait:   5
 
 frontend:
   api_url: "http://localhost:8082/api"

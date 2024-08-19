@@ -37,6 +37,9 @@ type wsErrorRateLimit struct {
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func ValidateClickData(clicks int, lastClicks time.Time) bool {
@@ -212,6 +215,8 @@ func (h *Handlers) WebsocketClicker(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.Conn, params map[string]string) {
+	//TODO: defer Control Message
+
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
 	defer cancel()
 	userId, err := wsFirstMessageAuthorization(ws)
@@ -226,16 +231,27 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 	if err != nil {
 		return
 	}
+
+	if err = database.UpdateUserWebsocketBlockedUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ws.WriteJSON(wsError{"cant tap or create 2 rams parallel", 409})
+			return
+		}
+		ws.WriteJSON(wsError{"unexpected db error", 500})
+		return
+	}
+	defer database.UpdateUserWebsocketBlockedUntilFieldToZero(context.WithoutCancel(ctx), h.db, userId)
+
 	ctx = context.WithValue(ctx, "userId", userId)
 
-	PingOrCancelContext(ctx, ws, cancel)
+	go PingOrCancelContext(ctx, ws, cancel)
 
 	var clicked int
 	defer func() {
 		if clicked == 0 {
 			return
 		}
-		database.AddTapsRamContext(context.Background(), h.db, ram.Id, clicked)
+		database.AddTapsRamContext(context.WithoutCancel(ctx), h.db, ram.Id, clicked)
 	}()
 	lastClicks := time.Now().Add(-1 * time.Minute)
 
@@ -280,6 +296,8 @@ func (h *Handlers) WebsocketGenerateRam(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websocket.Conn, params map[string]string) {
+	//TODO: defer Control Message
+
 	defer ws.Close()
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
 	defer cancel()
@@ -297,19 +315,19 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 
-	if err = database.UpdateUserCantGenerateRamUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
+	if err = database.UpdateUserWebsocketBlockedUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			ws.WriteJSON(wsError{"cant generate 2 rams parallel", 500})
+			ws.WriteJSON(wsError{"cant tap or create 2 rams parallel", 409})
 			return
 		}
 		ws.WriteJSON(wsError{"unexpected db error", 500})
 		return
 	}
-	defer database.UpdateUserContext(ctx, h.db, userId, entities.User{CantGenerateRamUntil: 0})
+	defer database.UpdateUserWebsocketBlockedUntilFieldToZero(context.WithoutCancel(ctx), h.db, userId)
 
 	ctx = context.WithValue(ctx, "userId", userId)
 
-	PingOrCancelContext(ctx, ws, cancel)
+	go PingOrCancelContext(ctx, ws, cancel)
 
 	if user.DailyRamGenerationTime == 0 {
 		ws.WriteJSON(map[string]any{"status": "need first ram prompt"})
