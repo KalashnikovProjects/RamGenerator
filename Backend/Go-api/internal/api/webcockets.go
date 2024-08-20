@@ -232,7 +232,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 		return
 	}
 
-	if err = database.UpdateUserWebsocketBlockedUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
+	if err = database.UpdateUserClickersBlockedIfCan(ctx, h.db, userId, int(time.Now().Unix())+7200, int(time.Now().Unix())); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			ws.WriteJSON(wsError{"cant tap or create 2 rams parallel", 409})
 			return
@@ -240,7 +240,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 		ws.WriteJSON(wsError{"unexpected db error", 500})
 		return
 	}
-	defer database.UpdateUserWebsocketBlockedUntilFieldToZero(context.WithoutCancel(ctx), h.db, userId)
+	defer database.UpdateUserClickersBlockedToZero(context.WithoutCancel(ctx), h.db, userId)
 
 	ctx = context.WithValue(ctx, "userId", userId)
 
@@ -315,7 +315,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 
-	if err = database.UpdateUserWebsocketBlockedUntilFieldIfItZero(ctx, h.db, userId, int(time.Now().Unix())+7200); err != nil {
+	if err = database.UpdateUserClickersBlockedIfCan(ctx, h.db, userId, int(time.Now().Unix())+7200, int(time.Now().Unix())); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			ws.WriteJSON(wsError{"cant tap or create 2 rams parallel", 409})
 			return
@@ -323,7 +323,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		ws.WriteJSON(wsError{"unexpected db error", 500})
 		return
 	}
-	defer database.UpdateUserWebsocketBlockedUntilFieldToZero(context.WithoutCancel(ctx), h.db, userId)
+	defer database.UpdateUserClickersBlockedToZero(context.WithoutCancel(ctx), h.db, userId)
 
 	ctx = context.WithValue(ctx, "userId", userId)
 
