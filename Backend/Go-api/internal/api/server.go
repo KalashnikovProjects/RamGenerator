@@ -29,12 +29,12 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.PutPatchUser))).Methods("PUT", "PATCH")
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.DeleteUser))).Methods("DELETE")
 
-	router.Handle("/api/users/{username}/ws/generate-ram", tollbooth.LimitHandler(tollbooth.NewLimiter(0.5, nil), http.HandlerFunc(handlers.WebsocketGenerateRam))).Methods("GET", "POST")
+	router.Handle("/api/users/{username}/ws/generate-ram", tollbooth.LimitHandler(tollbooth.NewLimiter(3, nil), http.HandlerFunc(handlers.WebsocketGenerateRam))).Methods("GET", "POST")
 
 	router.Handle("/api/users/{username}/rams", http.HandlerFunc(handlers.GetRams)).Methods("GET")
 	router.Handle("/api/users/{username}/rams/{id}", http.HandlerFunc(handlers.GetRam)).Methods("GET")
 
-	router.Handle("/api/users/{username}/rams/{id}/ws/clicker", tollbooth.LimitHandler(tollbooth.NewLimiter(1, nil), AuthorizationMiddleware(http.HandlerFunc(handlers.WebsocketGenerateRam)))).Methods("GET", "POST")
+	router.Handle("/api/users/{username}/rams/{id}/ws/clicker", tollbooth.LimitHandler(tollbooth.NewLimiter(3, nil), AuthorizationMiddleware(http.HandlerFunc(handlers.WebsocketGenerateRam)))).Methods("GET", "POST")
 
 	// router.Handle("/api/users/{username}/rams/{id}", AuthorizationMiddleware(http.HandlerFunc(handlers.DeleteRam))).Methods("DELETE")
 	// router.Handle("/api/users/{username}/rams/{id}", AuthorizationMiddleware(http.HandlerFunc(handlers.PutPatchRam))).Methods("PUT", "PATCH")

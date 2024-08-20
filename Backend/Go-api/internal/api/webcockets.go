@@ -17,7 +17,6 @@ import (
 	"time"
 )
 
-// TODO: одна daily другая на second
 var (
 	errorGenerateRamLimitExceed = errors.New("error generating ram: daily rams limit exceed")
 	errorGenerateRamWaitTime    = errors.New("error generating ram: too many requests")
@@ -88,6 +87,8 @@ func PingOrCancelContext(ctx context.Context, ws *websocket.Conn, cancel func())
 }
 
 func wsFirstMessageAuthorization(ws *websocket.Conn) (int, error) {
+	ws.SetReadDeadline(time.Now().Add(time.Second * 2))
+
 	messageType, wsMessage, err := ws.ReadMessage()
 	if err != nil {
 		ws.WriteJSON(wsError{"read message error", 400})
@@ -104,6 +105,8 @@ func wsFirstMessageAuthorization(ws *websocket.Conn) (int, error) {
 		ws.WriteJSON(wsError{"unauthorized, first message must be token", 401})
 		return 0, err
 	}
+	ws.SetReadDeadline(time.Time{})
+
 	return userId, err
 }
 
