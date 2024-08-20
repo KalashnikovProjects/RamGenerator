@@ -145,14 +145,14 @@ func GetUserByRamIdContext(ctx context.Context, db SQLQueryExec, id int) (entiti
 	return GetUserContext(ctx, db, ram.UserId)
 }
 
-func UpdateUserWebsocketBlockedUntilFieldIfItZero(ctx context.Context, db SQLQueryExec, id, cantGenerateRamUntil int) error {
-	query := "UPDATE users SET clickers_blocked_until=$1 WHERE id=$2 AND clickers_blocked_until=0 RETURNING id"
-	row := db.QueryRowContext(ctx, query, cantGenerateRamUntil, id)
+func UpdateUserClickersBlockedIfCan(ctx context.Context, db SQLQueryExec, id, cantGenerateRamUntil, nowTime int) error {
+	query := "UPDATE users SET clickers_blocked_until=$1 WHERE id=$2 AND clickers_blocked_until<$3 RETURNING id"
+	row := db.QueryRowContext(ctx, query, cantGenerateRamUntil, id, nowTime)
 	var dbId int
 	return row.Scan(&dbId)
 }
 
-func UpdateUserWebsocketBlockedUntilFieldToZero(ctx context.Context, db SQLQueryExec, id int) error {
+func UpdateUserClickersBlockedToZero(ctx context.Context, db SQLQueryExec, id int) error {
 	query := "UPDATE users SET clickers_blocked_until=0 WHERE id=$1"
 	_, err := db.ExecContext(ctx, query, id)
 	return err
