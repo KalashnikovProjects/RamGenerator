@@ -21,7 +21,7 @@ class GeminiBugError(Exception):
 class PromptGenerator:
     def __init__(self, api_key: str,
                  system_instructions: str,
-                 response_len: int = config.GEMINI.DEFAULT_RESPONSE_LENGTH,
+                 response_len: int,
                  model_name: str = config.GEMINI.MODEL,
                  safety_settings=None):
 
@@ -31,7 +31,7 @@ class PromptGenerator:
             model_name=model_name,
             safety_settings=safety_settings,
             system_instruction=system_instructions,
-            generation_config=genai.GenerationConfig(candidate_count=1, max_output_tokens=response_len // 4)
+            generation_config=genai.GenerationConfig(candidate_count=1, max_output_tokens=response_len // 3)
         )
 
     @retry(tries=3, delay=2)

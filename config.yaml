@@ -13,7 +13,7 @@ prompts:
 Нейросеть для генерации изображений рисует различных баранов, ты не имеешь право задавать в промпте параметры чего-либо кроме внешнего 
 вида барана. Ты пишешь промпт на основе запроса пользователя и в большей степени на основе описания других его баранов, ты должен добавить ровно
 1 случайный признак от себя (мутацию), всё остальное на основе запроса или других баранов.'
-  base_image_prompt: "баран, лужайка на фоне, ясная погода, баран на переднем плане, "
+  base_image_prompt: "баран, баран на переднем плане, "
   negative_image_prompt: "яркие цвета, кислотность, высокая контрастность"
   base_description_prompt: "Напиши максимально кратное описание барана на этом изображении (не более 6 слов)."
 
@@ -26,7 +26,7 @@ clicks:
 gemini:
   model: "models/gemini-1.5-flash-latest"
   rate_limit: 15
-  default_response_length: 50
+  max_response_length: 50
   proxy: true
   proxy_endpoint: "cheery-baklava-3e2f26.netlify.app"
   proxy_transport: "rest"
@@ -37,8 +37,11 @@ users:
     - [0.05, 0.25]
     - [0.55, 0.75]
   max_username_len: 24
+
+generation:
+  max_prompt_len: 30
   time_between_daily: 1200
-  time_between_daily_generations:
+  time_between_daily_another:
     - 10
 
 image:

@@ -39,7 +39,7 @@ class GEMINI:
     API_KEY = os.getenv("GEMINI_API_KEY")
     MODEL = yaml_config["gemini"]["model"]
     RATE_LIMIT = yaml_config["gemini"]["rate_limit"]
-    DEFAULT_RESPONSE_LENGTH = yaml_config["gemini"]["default_response_length"]
+    MAX_RESPONSE_LENGTH = yaml_config["gemini"]["max_response_length"]
 
     proxy = yaml_config["gemini"]["proxy"]
     if proxy:
@@ -49,7 +49,7 @@ class GEMINI:
         ENDPOINT = None
         TRANSPORT = None
 
-    safety_settings = {
+    SAFETY_SETTINGS = {
         HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
         HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
         HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
