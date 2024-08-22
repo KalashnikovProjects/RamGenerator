@@ -21,6 +21,7 @@ import (
 
 var (
 	ImageGenerationTimeout = errors.New("image generation timeout")
+	TooLongPromptError     = errors.New("too long prompt error")
 	CensorshipError        = errors.New("user prompt or descriptions contains illegal content")
 )
 
@@ -60,11 +61,16 @@ func CreateGRPCConnection() pb.RamGeneratorClient {
 }
 
 func GenerateStartPrompt(context context.Context, grpcClient pb.RamGeneratorClient, userPrompt string) (string, error) {
+	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+		return "", TooLongPromptError
+	}
 	prompt, err := grpcClient.GenerateStartPrompt(context, &pb.GenerateStartPromptRequest{UserPrompt: userPrompt})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.InvalidArgument {
-			return "", CensorshipError
+			if st.String() == "User prompt contains illegal content" {
+				return "", CensorshipError
+			}
 		}
 		return "", err
 	}
@@ -72,11 +78,17 @@ func GenerateStartPrompt(context context.Context, grpcClient pb.RamGeneratorClie
 }
 
 func GenerateHybridPrompt(context context.Context, grpcClient pb.RamGeneratorClient, userPrompt string, ramsDescription []string) (string, error) {
+	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+		return "", TooLongPromptError
+	}
+
 	prompt, err := grpcClient.GenerateHybridPrompt(context, &pb.GenerateHybridPromptRequest{UserPrompt: userPrompt, RamDescriptions: ramsDescription})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.InvalidArgument {
-			return "", CensorshipError
+			if st.String() == "User prompt or descriptions contains illegal content" {
+				return "", CensorshipError
+			}
 		}
 		return "", err
 	}

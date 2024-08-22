@@ -36,9 +36,11 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         logging.info(f"Генерация промпта, промпт:{request.user_prompt}")
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
+                                                  system_instructions=config.PROMPTS.BASE_START_PROMPT,
+                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
                                                   model_name=config.GEMINI.MODEL,
-                                                  safety_settings=config.GEMINI.safety_settings,
-                                                  system_instructions=config.PROMPTS.BASE_START_PROMPT)
+                                                  safety_settings=config.GEMINI.SAFETY_SETTINGS)
+
         prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}"
         try:
             res = generator.generate(prompt)
@@ -53,9 +55,10 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         logging.info(f"Генерация гибрида промпта, промпт:{request.user_prompt}")
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
+                                                  system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT,
+                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
                                                   model_name=config.GEMINI.MODEL,
-                                                  safety_settings=config.GEMINI.safety_settings,
-                                                  system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT)
+                                                  safety_settings=config.GEMINI.SAFETY_SETTINGS)
         rams = '\n'.join(request.ram_descriptions)
         prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}\nОписание баранов пользователя: \n{rams}"
         try:
@@ -89,9 +92,10 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         logging.info(f"Генерация описания")
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
+                                                  system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT,
+                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
                                                   model_name=config.GEMINI.MODEL,
-                                                  safety_settings=config.GEMINI.safety_settings,
-                                                  system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT)
+                                                  safety_settings=config.GEMINI.SAFETY_SETTINGS)
         try:
             try:
                 req = requests.get(request.url)

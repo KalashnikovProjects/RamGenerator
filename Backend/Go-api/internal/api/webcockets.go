@@ -151,17 +151,17 @@ func checkWsRamAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webso
 }
 
 func checkWsCanGenerateRam(ws *websocket.Conn, user entities.User) error {
-	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Users.TimeBetweenDaily)
+	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Generation.TimeBetweenDaily)
 	if ramsGeneratedLastDay == 0 {
 		return nil
 	}
 	if ramsGeneratedLastDay >= len(config.Conf.Clicks.DailyRams) {
-		targetTime := user.DailyRamGenerationTime + config.Conf.Users.TimeBetweenDaily*60
+		targetTime := user.DailyRamGenerationTime + config.Conf.Generation.TimeBetweenDaily*60
 		ws.WriteJSON(wsErrorRateLimit{fmt.Sprintf("you can generate only %d rams per day, you can generate next in %d (unix)", len(config.Conf.Clicks.DailyRams), targetTime), 429, targetTime})
 		return errorGenerateRamLimitExceed
 	}
 	targetTime := user.DailyRamGenerationTime
-	for _, t := range config.Conf.Users.TimeBetweenDailyGenerations[:ramsGeneratedLastDay] {
+	for _, t := range config.Conf.Generation.TimeBetweenDailyAnother[:ramsGeneratedLastDay] {
 		targetTime += t * 60
 	}
 	if targetTime > int(time.Now().Unix()) {
@@ -349,7 +349,9 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 
 	userPrompt := string(wsMessage)
-
+	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+		ws.WriteJSON(wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
+	}
 	aiGeneratedRam := make(chan entities.Ram)
 	go func() {
 		var prompt string
@@ -370,6 +372,10 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		if err != nil {
 			if errors.Is(err, ram_image_generator.CensorshipError) {
 				ws.WriteJSON(wsError{"user prompt or rams descriptions contains illegal content", 400})
+				return
+			}
+			if errors.Is(err, ram_image_generator.TooLongPromptError) {
+				ws.WriteJSON(wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
 				return
 			}
 			ws.WriteJSON(wsError{"prompt generating error", 500})
@@ -404,7 +410,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}()
 
 	var needClicks int
-	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Users.TimeBetweenDaily)
+	ramsGeneratedLastDay := user.CalculateRamsGeneratedLastDay(config.Conf.Generation.TimeBetweenDaily)
 	if user.DailyRamGenerationTime == 0 {
 		needClicks = config.Conf.Clicks.FirstRam
 	} else {
