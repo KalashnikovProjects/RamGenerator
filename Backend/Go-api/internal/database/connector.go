@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/config"
 	_ "github.com/lib/pq"
 	"log"
 	"reflect"
@@ -101,10 +100,9 @@ func GeneratePostgresConnectionString(user, password, host string, pgPort int, d
 	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s?sslmode=disable`, user, password, host, pgPort, dbName)
 }
 
-func CreateDBConnectionContext(ctx context.Context) *sql.DB {
+func CreateDBConnectionContext(ctx context.Context, connectionString string) *sql.DB {
 	var db *sql.DB
 	var err error
-	connectionString := GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Hostname, config.Conf.Database.Port, config.Conf.Database.DBName)
 	for {
 		db, err = OpenDb(ctx, connectionString)
 		if err == nil {

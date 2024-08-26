@@ -68,7 +68,8 @@ func main() {
 	log.Println("Запуск go сервиса...")
 
 	ctx := context.Background()
-	db := database.CreateDBConnectionContext(ctx)
+	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Hostname, config.Conf.Database.Port, config.Conf.Database.DBName)
+	db := database.CreateDBConnectionContext(ctx, pgConnectionString)
 	gRPCConn := ram_image_generator.CreateGRPCConnection()
 
 	server := api.NewRamGeneratorServer(ctx, fmt.Sprintf(":%d", config.Conf.Ports.Api), db, gRPCConn)
