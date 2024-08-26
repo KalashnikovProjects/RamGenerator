@@ -76,6 +76,7 @@ body {
 }
 
 .active-search-box > label > .search-input {
+    padding-left: 0.3rem;
     max-width: 80vw;
     width: 180px;
 }
@@ -95,7 +96,7 @@ body {
     font-size: 16px;
     transition: 0.4s;
     line-height: 40px;
-    width: 0px;
+    width: 0;
 }
 
 .header-right {
@@ -115,4 +116,12 @@ body {
     .ram-icon {
         width: 20px;
     }
+}
+
+input {
+    background: rgba(0, 0, 0, 0.05) !important;
+    outline: none!important;
+    font-weight: 400;
+    align-items: center;
+    border-radius: 3rem;
 }

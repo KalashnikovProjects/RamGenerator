@@ -1,27 +1,10 @@
-.purpleButton {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: #8213bd;
-    --bs-btn-border-color: #8213bd;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #6b119a;
-    --bs-btn-hover-border-color: #6b119a;
-    --bs-btn-focus-shadow-rgb: 60, 153, 110;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #500e73;
-    --bs-btn-active-border-color: #500e73;
-    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-    --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #4a2c5d;
-    --bs-btn-disabled-border-color: #4a2c5d;
-}
-
-.loginTabs {
-    border-radius: 3px;
-    border-color: rgba(255, 255, 255, 0.47);
+.loginTabDefaultUnderline {
+    border-bottom: var(--bs-nav-underline-border-width) solid rgba(255, 255, 255, 0.18);
 }
 
 .loginError {
-    text-align: center;
+    padding-left: 1rem;
+    text-align: right;
 }
 
 .loginContainer {
@@ -30,6 +13,7 @@
 }
 
 .loginContainer {
+    margin-bottom: 20vh;
     margin-top: 14vh;
 }
 
@@ -49,4 +33,31 @@
         font-size: 17px;
         margin-bottom: 1vh!important;
     }
+}
+
+.button-login {
+    max-height: 3rem;
+    background: none;
+    color: white;
+    text-decoration: none;
+    font-size: 1.3rem;
+    padding: 0.5rem 1.5rem 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3rem;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.button-login:hover:not(:disabled) {
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.3);
+    text-shadow: gray 2px 0 20px;
+}
+
+.login-input {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.6rem 1rem;
+    font-weight: 400;
 }
