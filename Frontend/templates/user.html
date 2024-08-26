@@ -1,0 +1,50 @@
+{{ define "content" }}
+    <link href="static/styles/user.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="static/js/user.js"></script>
+
+    <div id="generate-ram" class="user-popup">
+        <div class="popup-menu"></div>
+    </div>
+    <div id="settings" class="user-popup">
+        <div class="popup-menu">
+            <h3 class="text-center mb-5">Настройки аккаунта</h3>
+            <div>
+                <label class="mb-4">
+                    Новое имя пользователя<br>
+                    <input class="settings-input" id="settings-username" type="text" name="" placeholder="">
+                </label>
+                <button>-></button>
+                <br>
+                <label>
+                    Новый пароль<br>
+                    <input class="settings-input" id="settings-password" type="password" name="" placeholder="">
+                </label>
+                <label>
+                    Повторите новый пароль<br>
+                    <input class="settings-input" id="settings-password-repeat" type="password" name="" placeholder="">
+                </label>
+                <button>-></button>
+
+            </div>
+        </div>
+    </div>
+    <div id="ram" class="user-popup">
+        <div class="popup-menu">
+        </div>
+    </div>
+    <script>
+        bindUserPopups()
+        checkHash()
+    </script>
+
+    <div class="width-control user-section row m-lg-5" id="user-section">
+        <div class="col-md-3 user-card" id="user-card">
+            <script>displayUserInfo()</script>
+        </div>
+        <div class="col-md-9 min70height">
+            <div id="rams">
+                <script>displayUserRams()</script>
+            </div>
+        </div>
+    </div>
+{{ end }}

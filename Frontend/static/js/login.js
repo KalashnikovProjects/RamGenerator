@@ -28,7 +28,7 @@ function validatePassword(password, passwordRepeat = null) {
 async function handleServerResponse(response, successCallback, errorElementId) {
     const text = await response.text();
     if (response.ok) {
-        setCookie("token", text, {samesite: "lax"});
+        setCookie("token", text, {samesite: "strict"});
         sessionStorage.removeItem("user")
         successCallback(await loadUser());
     } else {

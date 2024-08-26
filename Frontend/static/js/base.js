@@ -1,4 +1,19 @@
-var user
+"use strict";
+
+let user;
+
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+if ('serviceWorker' in navigator) {
+    // Весь код регистрации у нас асинхронный.
+    navigator.serviceWorker.register('/static/js/sw.js')
+        .then(() => navigator.serviceWorker.ready.then((worker) => {
+            worker.sync.register('syncdata');
+        }))
+        .catch((err) => console.log(err));
+}
 
 async function loadAvatar(username, ramId) {
     if (ramId === 0) {
@@ -30,6 +45,7 @@ async function loadUser() {
         user = sessionStorage.getItem("user");
         if (!!user) {
             user = JSON.parse(user)
+            console.log(user)
             return user
         }
 
@@ -71,8 +87,8 @@ loadUser().then(
 )
 
 function displayUser() {
-    if(loadingUser) {
-        setTimeout(displayUser, 5);
+    if (loadingUser) {
+        setTimeout(displayUser, 5)
         return;
     }
 
