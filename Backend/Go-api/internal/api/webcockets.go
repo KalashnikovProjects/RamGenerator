@@ -53,7 +53,7 @@ func ValidateClickData(clicks int, lastClicks time.Time) bool {
 		timeSub = time.Minute
 	}
 
-	if clicks < 0 || clicks > 100 {
+	if clicks < 0 || clicks > 200 {
 		return false
 	}
 
@@ -184,7 +184,7 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 			messageType, wsMessage, err := ws.ReadMessage()
 			if err != nil {
 				ws.WriteJSON(wsError{"read message error", 400})
-				continue
+				return err
 			}
 			if messageType != websocket.TextMessage {
 				ws.WriteJSON(wsError{"invalid message type", 400})
@@ -267,7 +267,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 			messageType, wsMessage, err := ws.ReadMessage()
 			if err != nil {
 				ws.WriteJSON(wsError{"read message error", 400})
-				continue
+				return
 			}
 			if messageType != websocket.TextMessage {
 				ws.WriteJSON(wsError{"invalid message type", 400})
@@ -351,6 +351,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	userPrompt := string(wsMessage)
 	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
 		ws.WriteJSON(wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
+		return
 	}
 	aiGeneratedRam := make(chan entities.Ram)
 	go func() {
@@ -361,6 +362,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			rams, err := database.GetRamsByUserIdContext(ctx, h.db, user.Id)
 			if err != nil {
 				ws.WriteJSON(wsError{"unexpected db error", 500})
+				ws.Close()
 				return
 			}
 			var descriptions []string
@@ -372,13 +374,16 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		if err != nil {
 			if errors.Is(err, ram_image_generator.CensorshipError) {
 				ws.WriteJSON(wsError{"user prompt or rams descriptions contains illegal content", 400})
+				ws.Close()
 				return
 			}
 			if errors.Is(err, ram_image_generator.TooLongPromptError) {
 				ws.WriteJSON(wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
+				ws.Close()
 				return
 			}
 			ws.WriteJSON(wsError{"prompt generating error", 500})
+			ws.Close()
 			return
 		}
 
@@ -386,23 +391,28 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		if err != nil {
 			if errors.Is(err, ram_image_generator.ImageGenerationTimeout) {
 				ws.WriteJSON(wsError{"image generation timeout", 500})
+				ws.Close()
 				return
 			}
 			ws.WriteJSON(wsError{"prompt generating error", 500})
+			ws.Close()
 			return
 		}
 		imageUrl, err := ram_image_generator.UploadImage(imageBase64)
 		if err != nil {
 			ws.WriteJSON(wsError{"image uploading error", 500})
+			ws.Close()
 			return
 		}
 		imageDescription, err := ram_image_generator.GenerateDescription(ctx, h.gRPCClient, imageUrl)
 		if err != nil {
 			if errors.Is(err, ram_image_generator.CensorshipError) {
 				ws.WriteJSON(wsError{"user prompt or rams descriptions contains illegal content", 400})
+				ws.Close()
 				return
 			}
 			ws.WriteJSON(wsError{"image description generating error", 500})
+			ws.Close()
 			return
 		}
 		ws.WriteJSON(map[string]string{"status": "image generated"})
@@ -422,9 +432,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 	ws.WriteJSON(map[string]any{"status": "need clicks", "clicks": needClicks})
 	err = h.websocketNeedClicks(ctx, ws, needClicks)
-
 	if err != nil {
-		ws.WriteJSON(wsError{"clicks timeout", 408})
 		return
 	}
 
