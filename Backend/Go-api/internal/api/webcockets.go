@@ -45,10 +45,6 @@ func ValidateClickData(clicks int, lastClicks time.Time) bool {
 	now := time.Now()
 	timeSub := now.Sub(lastClicks)
 
-	if timeSub < time.Second {
-		return false
-	}
-
 	if timeSub > time.Minute {
 		timeSub = time.Minute
 	}
@@ -173,7 +169,7 @@ func checkWsCanGenerateRam(ws *websocket.Conn, user entities.User) error {
 
 func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, amount int) error {
 	var clicked int
-	lastClicks := time.Now().Add(-1 * time.Minute)
+	lastClicks := time.Now()
 
 	for {
 		select {
@@ -199,6 +195,7 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 
 			clicked += messageClicks
 			if clicked >= amount {
+				ws.WriteJSON(map[string]any{"status": "success clicked"})
 				return nil
 			}
 		}
@@ -256,7 +253,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 		}
 		database.AddTapsRamContext(context.WithoutCancel(ctx), h.db, ram.Id, clicked)
 	}()
-	lastClicks := time.Now().Add(-1 * time.Minute)
+	lastClicks := time.Now()
 
 	for {
 		select {
@@ -349,7 +346,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 
 	userPrompt := string(wsMessage)
-	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+	if len([]rune(userPrompt)) > config.Conf.Generation.MaxPromptLen {
 		ws.WriteJSON(wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
 		return
 	}
@@ -442,7 +439,8 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		ws.WriteJSON(wsError{"unexpected db error", 500})
 		return
 	}
-	_, err = database.CreateRamContext(ctx, tx, ram)
+	ramId, err := database.CreateRamContext(ctx, tx, ram)
+	ram.Id = ramId
 	if err != nil {
 		tx.Rollback()
 		ws.WriteJSON(wsError{"unexpected db error", 500})
