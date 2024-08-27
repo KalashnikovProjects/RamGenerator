@@ -34,7 +34,7 @@ func GenerateToken(id int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  id,
 		"nbf": now.Unix(),
-		"exp": now.Add(5 * 24 * time.Hour).Unix(),
+		"exp": now.Add(7 * 24 * time.Hour).Unix(),
 		"iat": now.Unix(),
 	})
 
