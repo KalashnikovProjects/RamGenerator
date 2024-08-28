@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/config"
 	pb "github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/proto_generated"
+	"github.com/rivo/uniseg"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure" // Для упрощения не будем использовать SSL/TLS аутентификация
@@ -61,7 +62,7 @@ func CreateGRPCConnection() pb.RamGeneratorClient {
 }
 
 func GenerateStartPrompt(context context.Context, grpcClient pb.RamGeneratorClient, userPrompt string) (string, error) {
-	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+	if uniseg.GraphemeClusterCount(userPrompt) > config.Conf.Generation.MaxPromptLen {
 		return "", TooLongPromptError
 	}
 	prompt, err := grpcClient.GenerateStartPrompt(context, &pb.GenerateStartPromptRequest{UserPrompt: userPrompt})
@@ -78,7 +79,7 @@ func GenerateStartPrompt(context context.Context, grpcClient pb.RamGeneratorClie
 }
 
 func GenerateHybridPrompt(context context.Context, grpcClient pb.RamGeneratorClient, userPrompt string, ramsDescription []string) (string, error) {
-	if len(userPrompt) > config.Conf.Generation.MaxPromptLen {
+	if uniseg.GraphemeClusterCount(userPrompt) > config.Conf.Generation.MaxPromptLen {
 		return "", TooLongPromptError
 	}
 

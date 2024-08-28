@@ -12,6 +12,7 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/ram_image_generator"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/rivo/uniseg"
 	"net/http"
 	"strconv"
 	"sync"
@@ -369,7 +370,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 
 	userPrompt := string(wsMessage)
-	if len([]rune(userPrompt)) > config.Conf.Generation.MaxPromptLen {
+	if uniseg.GraphemeClusterCount(userPrompt) > config.Conf.Generation.MaxPromptLen {
 		WebsocketSendJSON(ctx, ws, wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
 		return
 	}
