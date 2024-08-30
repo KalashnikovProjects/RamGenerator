@@ -20,8 +20,10 @@ import (
 )
 
 var (
-	errorGenerateRamLimitExceed = errors.New("error generating ram: daily rams limit exceed")
-	errorGenerateRamWaitTime    = errors.New("error generating ram: too many requests")
+	errorGenerateRamLimitExceed = errors.New("error: daily rams limit exceed")
+	errorGenerateRamWaitTime    = errors.New("error: too many requests")
+	errorNotYour                = errors.New("error: its not your ram")
+	badMessageType              = errors.New("error: bad message type")
 )
 
 type wsError struct {
@@ -114,7 +116,7 @@ func wsFirstMessageAuthorization(ctx context.Context, ws *websocket.Conn) (int, 
 	}
 	if messageType != websocket.TextMessage {
 		WebsocketSendJSON(ctx, ws, wsError{"invalid message type", 400})
-		return 0, err
+		return 0, badMessageType
 	}
 
 	token := string(wsMessage)
@@ -125,7 +127,7 @@ func wsFirstMessageAuthorization(ctx context.Context, ws *websocket.Conn) (int, 
 	}
 	ws.SetReadDeadline(time.Time{})
 
-	return userId, err
+	return userId, nil
 }
 
 func checkWsUserAccess(ctx context.Context, db database.SQLTXQueryExec, ws *websocket.Conn, userId int, params map[string]string) (entities.User, error) {
@@ -140,7 +142,7 @@ func checkWsUserAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webs
 	}
 	if user.Username != params["username"] {
 		WebsocketSendJSON(ctx, ws, wsError{"you can't tap another user ram", 403})
-		return entities.User{}, err
+		return entities.User{}, errorNotYour
 	}
 	return user, nil
 }
@@ -163,7 +165,7 @@ func checkWsRamAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webso
 	}
 	if user.Id != dbRam.UserId {
 		WebsocketSendJSON(ctx, ws, wsError{"it's not your ram", 403})
-		return entities.Ram{}, err
+		return entities.Ram{}, errorNotYour
 	}
 	return dbRam, nil
 }
