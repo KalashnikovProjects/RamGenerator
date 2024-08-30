@@ -129,7 +129,6 @@ func UploadImage(base64Image string) (string, error) {
 		return "", err
 	}
 	if jsonResp.StatusCode != 200 {
-		log.Println(string(data))
 		return "", fmt.Errorf("unexpected image upload api error")
 	}
 	return jsonResp.Image.Url, nil
