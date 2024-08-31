@@ -105,6 +105,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Неизменяемые поля
+	user.Id = 0
 	user.DailyRamGenerationTime = 0
 	user.RamsGeneratedLastDay = 0
 
