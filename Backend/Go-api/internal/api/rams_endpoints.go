@@ -146,8 +146,10 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ram id cant be edited", http.StatusBadRequest)
 		return
 	}
+	// Неизменяемые поля
 	ram.Id = id
 	ram.Taps = 0
+	ram.UserId = 0
 	err = database.UpdateRamContext(ctx, h.db, id, ram)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)

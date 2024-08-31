@@ -12,7 +12,7 @@ type IdResponse struct {
 }
 
 type User struct {
-	Id           int    `json:"-"`
+	Id           int    `json:"id"`
 	Username     string `json:"username"`           // Максимум 24 символа
 	Password     string `json:"password,omitempty"` // В базе данных PasswordHash, Password только в запросах регистрации / входа, put user, patch user
 	PasswordHash string `json:"-"`
@@ -37,7 +37,7 @@ type Ram struct {
 	Taps        int    `json:"taps"`        // Изменяется только через ws/clicker
 	Description string `json:"description"` // Оно же промпт для нейросети
 	ImageUrl    string `json:"image_url"`
-	UserId      int    `json:"-"` // Изменяется только через трейды
+	UserId      int    `json:"user_id"` // Изменяется только через трейды
 }
 
 type Box [][]float64
