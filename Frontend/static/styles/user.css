@@ -33,7 +33,60 @@
 }
 
 .rams-list {
-    margin-top: 3rem;
+    margin-top: 2rem;
+    column-gap: 20px;
+    row-gap: 15px;
+}
+
+@media (max-width: 1000px) {
+    .rams-list {
+        margin-top: 1rem;
+    }
+}
+
+@media (min-width: 600px) {
+    .rams-list {
+        margin-left: 2rem;
+    }
+}
+
+.ram-card {
+    cursor: pointer;
+    border-radius: 0.8rem;
+    padding: 1rem;
+    height: 320px;
+    width: 280px;
+    background-color: rgb(44 44 44 / 16%);
+    text-align: center;
+
+}
+
+.ram-card-image {
+    border-radius: 1rem;
+    max-height: 80%;
+    max-width: 80%;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+    .ram-card {
+        height: 200px;
+        width: 160px;
+    }
+    .ram-card-description {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 399px) {
+    .ram-card {
+        padding: 0.1rem;
+        height: 120px;
+        width: 80px;
+    }
+    .ram-card-description {
+        font-size: 0.6rem;
+    }
 }
 
 .user-card {
@@ -154,12 +207,15 @@
     font-size: 1.5rem;
 }
 
-#generation-content {
-    text-align: center;
-}
-
 .prompt-label, .popup-error {
     margin-top: 20%;
+}
+
+@media (min-width: 1400px) {
+    .ram-error {
+        position: relative;
+        top: 20%;
+    }
 }
 
 .tap-label {
@@ -173,14 +229,36 @@
     width: 80%;
 }
 
+.ram-image {
+    max-width: 80%;
+    width: 80%;
+    border-radius: 0.5rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
 @media (min-width: 600px) {
     .tap-generate-img {
         height: 50%;
         width: auto;
     }
+
+    .ram-image {
+        height: 45%;
+        width: auto;
+    }
 }
 
-#generation-bottom {
-    text-align: center;
-    margin-top: auto;
+@media (min-width: 1400px) {
+    .ram-image {
+        height: 70%;
+        width: auto;
+    }
+}
+
+.wait-ram {
+    width: 150px;
+    height: 150px;
 }
