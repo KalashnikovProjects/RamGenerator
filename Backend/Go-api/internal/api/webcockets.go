@@ -77,7 +77,7 @@ func ValidateClickData(clicks int, lastClicks time.Time) bool {
 		return false
 	}
 
-	if clicks > int(40*timeSub.Seconds()) {
+	if clicks > int(30*timeSub.Seconds()) {
 		return false
 	}
 
@@ -219,7 +219,11 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 
 			clicked += messageClicks
 			if clicked >= amount {
-				WebsocketSendJSON(ctx, ws, map[string]any{"status": "success clicked"})
+				err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "success clicked"})
+				if err != nil {
+					WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+					return err
+				}
 				return nil
 			}
 		}
@@ -356,9 +360,13 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	go PingOrCancelContext(ctx, ws, cancel)
 
 	if user.DailyRamGenerationTime == 0 {
-		WebsocketSendJSON(ctx, ws, map[string]any{"status": "need first ram prompt"})
+		err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "need first ram prompt"})
 	} else {
-		WebsocketSendJSON(ctx, ws, map[string]any{"status": "need ram prompt"})
+		err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "need ram prompt"})
+	}
+	if err != nil {
+		WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+		return
 	}
 
 	messageType, wsMessage, err := ws.ReadMessage()
@@ -377,8 +385,9 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 	aiGeneratedRam := make(chan entities.Ram)
-	defer close(aiGeneratedRam)
 	go func() {
+		defer close(aiGeneratedRam)
+
 		var prompt string
 		if user.DailyRamGenerationTime == 0 {
 			prompt, err = ram_image_generator.GenerateStartPrompt(ctx, h.gRPCClient, userPrompt)
@@ -439,7 +448,12 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			ws.Close()
 			return
 		}
-		WebsocketSendJSON(ctx, ws, map[string]string{"status": "image generated"})
+		err = WebsocketSendJSON(ctx, ws, map[string]string{"status": "image generated"})
+		if err != nil {
+			WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+			ws.Close()
+			return
+		}
 		aiGeneratedRam <- entities.Ram{UserId: user.Id, Description: imageDescription, ImageUrl: imageUrl}
 	}()
 
@@ -454,7 +468,11 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		}
 		needClicks = config.Conf.Clicks.DailyRams[ramsGeneratedLastDay]
 	}
-	WebsocketSendJSON(ctx, ws, map[string]any{"status": "need clicks", "clicks": needClicks})
+	err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "need clicks", "clicks": needClicks})
+	if err != nil {
+		WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+		return
+	}
 	err = h.websocketNeedClicks(ctx, ws, needClicks)
 	if err != nil {
 		return
