@@ -292,10 +292,14 @@ class Generator {
                         break;
                 }
                 break;
-            //TODO либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз и без)
+            case 500:
+                error = "Произошла неизвестная ошибка на стороне сервера.";
+                // TODO подробнее про ошибки 500
+                break
+            //TODO либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз или без)
             default:
                 console.log("Unknown error", data.code, data.error);
-                error = `Unknown error ${data.code} ${data.error}`;
+                error = `Произошла неизвестная ошибка`;
                 break;
         }
         if (error) {
@@ -487,7 +491,6 @@ async function getRam(username, id) {
     });
     if (response.ok) {
         const ram = await response.json();
-        console.log(user, ram)
         ram.own = (!!user && user.id === ram.user_id);
         return ram
     } else {
@@ -610,57 +613,7 @@ class RamPage {
         }
     }
 
-    _onclose(event) {
-        if (event.wasClean) {
-            console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
-        } else {
-            let reason;
-            switch (event.code) {
-                // TODO
-                case 1000:
-                    reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
-                    break;
-                case 1001:
-                    reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
-                    break;
-                case 1002:
-                    reason = "An endpoint is terminating the connection due to a protocol error";
-                    break;
-                case 1003:
-                    reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
-                    break;
-                case 1004:
-                    reason = "Reserved. The specific meaning might be defined in the future.";
-                    break
-                case 1005:
-                    reason = "No status code was actually present.";
-                    break
-                case 1006:
-                    reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
-                    break
-                case 1007:
-                    reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [https://www.rfc-editor.org/rfc/rfc3629] data within a text message).";
-                    break
-                case 1008:
-                    reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
-                    break
-                case 1009:
-                    reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
-                    break
-                case 1010:
-                    reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. Specifically, the extensions that are needed are: " + event.reason;
-                    break
-                case 1011:
-                    reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
-                    break
-                case 1015:
-                    reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
-                    break
-                default:
-                    reason = "Unknown reason";
-            }
-        }
-    }
+    _onclose(event) {}
 
     _onerror(error) {
         const content = document.getElementById("ram-content");
@@ -681,7 +634,126 @@ async function openRam(id) {
     ramPage = new RamPage(id)
 }
 
-function bindUserPopups() {
+function validateUsername(username) {
+    return username.length >= 3 && username.length <= 24;
+}
+
+function validatePassword(password, passwordRepeat = null) {
+    if (password === "") {
+        return "Необходимо заполнить поле пароля";
+    }
+    if (passwordRepeat !== null && password !== passwordRepeat) {
+        return "Пароли не совпадают";
+    }
+    return null;
+}
+
+async function responseProcess(el, response) {
+    if (response.ok) {
+        el.classList.remove("text-danger");
+        el.innerText = "Успешно сохранено, теперь нужно будет перезайти в аккаунт"
+        setTimeout(() => {
+            sessionStorage.removeItem("user");
+            deleteCookie("token");
+            location.href = "/login";
+        }, 3000)
+    } else {
+        el.classList.add("text-danger");
+        const text = await response.text();
+
+        let errorText;
+        switch (response.status) {
+            case 404:
+                errorText = "Такого пользователя не существует";
+                break;
+            case 400:
+                if (text.startsWith("username must be ")) {
+                    errorText = "Имя должно состоять только из английских букв, цифр и нижнего подчёркивания";
+                } else if (text.startsWith("required fields are not specified")) {
+                    errorText = `Не заполнены необходимые поля: ${text.split(": ")[1]}`;
+                } else if (text.includes("is already taken")) {
+                    errorText = `Имя ${text.split("username ")[1].split(" is already taken")[0]} уже занято`;
+                } else {
+                    errorText = `Не заполнены необходимые поля: ${text.split(": ")[1]}`;
+                }
+                break;
+            default:
+                errorText = "Произошла неизвестная ошибка на сервере, попробуйте войти позже";
+        }
+        el.innerText = errorText
+    }
+}
+
+
+function changeUsername(event) {
+    event.preventDefault();
+    const el = document.getElementById('username-message')
+
+    const username = document.getElementById('settings-username').value;
+
+    if (!validateUsername(username)) {
+        el.classList.add("text-danger");
+        el.innerText = "Имя должно содержать от 3 до 24 символов";
+        return;
+    }
+
+    fetch(`${API_URL}/users/${userInfoUsername}`, {
+        mode: 'cors',
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${getCookie("token")}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"username": username})
+    }).then(
+        (response) => {responseProcess(el, response)},
+        (error) => {
+            el.classList.add("text-danger");
+            el.innerText = "Произошла ошибка при сохранении"
+        });
+}
+
+function changePassword(event) {
+    event.preventDefault();
+    const el = document.getElementById('password-message')
+
+    const password = document.getElementById('settings-password').value;
+    const passwordRepeat = document.getElementById('settings-password-repeat').value;
+    const err = validatePassword(password, passwordRepeat);
+    if (err) {
+        el.classList.add("text-danger");
+        el.innerText = err;
+        return;
+    }
+    fetch(`${API_URL}/users/${userInfoUsername}`, {
+        mode: 'cors',
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${getCookie("token")}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"password": password})
+    }).then(
+        (response) => {responseProcess(el, response)},
+        (error) => {
+            el.classList.add("text-danger");
+            el.innerText = "Произошла ошибка при сохранении"
+        });
+}
+
+async function bindSettingsForms() {
+    const changeUsernameForm = document.getElementById('changeUsernameForm');
+    if (changeUsernameForm) {
+        changeUsernameForm.addEventListener('submit', changeUsername);
+    }
+
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', changePassword);
+    }
+}
+
+async function bindUserPopups() {
     for (const elem of document.getElementsByClassName("user-popup")) {
         elem.addEventListener("mousedown", function (event) {
             if(event.target.classList.contains("user-popup")) {
@@ -691,7 +763,7 @@ function bindUserPopups() {
     }
 }
 
-function checkHash() {
+async function checkHash() {
     if (location.hash === "#generate-ram" && user.username === userInfoUsername) {
         ramGenerator = new Generator();
     }
