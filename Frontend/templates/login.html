@@ -1,6 +1,6 @@
 {{ define "content" }}
 <link href="static/styles/login.css" rel="stylesheet" crossorigin="anonymous">
-<script src="static/js/login.js" defer></script>
+<script src="static/js/login.js"></script>
 
 <div class="loginContainer container">
     <h3 class="loginText text-center">Чтобы продолжить, необходимо войти в аккаунт</h3>
@@ -15,7 +15,7 @@
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
             <form id="loginForm">
-                <input type="text" placeholder="Имя пользователя" class="login-input" id="loginUsername" name="username" autocomplete="username">
+                <input type="text" placeholder="Имя пользователя" class="login-input" id="loginUsername" name="username" autocomplete="username" maxlength="24">
 
                 <input type="password" placeholder="Пароль" class="login-input" id="loginPassword" name="password" autocomplete="current-password">
 
@@ -27,7 +27,7 @@
         </div>
         <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
             <form id="registerForm">
-                <input type="text" placeholder="Имя пользователя" class="login-input" id="registerUsername" name="username">
+                <input type="text" placeholder="Имя пользователя" class="login-input" id="registerUsername" name="username" maxlength="24">
 
                 <input type="password" placeholder="Пароль" class="login-input" id="registerPassword" name="password" autocomplete="username">
                 <input type="password" placeholder="Повторите пароль" class="login-input" id="registerPasswordRepeat" name="password repeat" autocomplete="new-password">
@@ -37,6 +37,7 @@
                 </div>
             </form>
         </div>
+        <script>bindLoginForms()</script>
     </div>
 </div>
 {{ end }}

@@ -17,7 +17,7 @@ function validateUsername(username) {
 
 function validatePassword(password, passwordRepeat = null) {
     if (password === "") {
-        return "Необходимо заполнить поле пароль";
+        return "Необходимо заполнить поле пароля";
     }
     if (passwordRepeat !== null && password !== passwordRepeat) {
         return "Пароли не совпадают";
@@ -33,7 +33,6 @@ async function handleServerResponse(response, successCallback, errorElementId) {
         sessionStorage.removeItem("user")
         successCallback(await loadUser());
     } else {
-        console.log(response, text);
         let errorText;
 
         switch (response.status) {
@@ -130,7 +129,7 @@ function handleRegister(event) {
     );
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function bindLoginForms(){
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -140,4 +139,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
-});
+}
