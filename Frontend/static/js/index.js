@@ -1,4 +1,4 @@
-function timeToTapHref() {
+async function timeToTapHref() {
     if (!user) {
         document.querySelector("#time-to-tap").href = "/login"
         return;
