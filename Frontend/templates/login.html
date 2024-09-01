@@ -15,12 +15,12 @@
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
             <form id="loginForm">
-                <input type="text" placeholder="Имя пользователя" class="login-input" id="loginUsername" name="username">
+                <input type="text" placeholder="Имя пользователя" class="login-input" id="loginUsername" name="username" autocomplete="username">
 
-                <input type="password" placeholder="Пароль" class="login-input" id="loginPassword" name="password">
+                <input type="password" placeholder="Пароль" class="login-input" id="loginPassword" name="password" autocomplete="current-password">
 
                 <div class="d-inline-flex mt-4 w-100 justify-content-between">
-                    <button id="loginButton" type="submit" class="button-login">Войти</button>
+                    <input id="loginButton" type="submit" class="button-login" value="Войти">
                     <div id="loginError" class="loginError text-danger "></div>
                 </div>
             </form>
@@ -29,10 +29,10 @@
             <form id="registerForm">
                 <input type="text" placeholder="Имя пользователя" class="login-input" id="registerUsername" name="username">
 
-                <input type="password" placeholder="Пароль" class="login-input" id="registerPassword" name="password">
-                <input type="password" placeholder="Повторите пароль" class="login-input" id="registerPasswordRepeat" name="password repeat">
+                <input type="password" placeholder="Пароль" class="login-input" id="registerPassword" name="password" autocomplete="username">
+                <input type="password" placeholder="Повторите пароль" class="login-input" id="registerPasswordRepeat" name="password repeat" autocomplete="new-password">
                 <div class="d-inline-flex mt-4">
-                    <button id="registerButton" type="submit" class="button-login">Зарегистрироваться</button>
+                    <input id="registerButton" type="submit" class="button-login" value="Зарегистрироваться">
                     <div id="registerError" class="loginError text-danger"></div>
                 </div>
             </form>
