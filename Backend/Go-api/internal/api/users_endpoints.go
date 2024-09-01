@@ -76,18 +76,20 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbRam, err := database.GetRamContext(ctx, h.db, user.AvatarRamId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, fmt.Sprintf("no rams with id = %d", user.AvatarRamId), http.StatusNotFound)
+	if user.AvatarRamId != 0 {
+		dbRam, err := database.GetRamContext(ctx, h.db, user.AvatarRamId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				http.Error(w, fmt.Sprintf("no rams with id = %d", user.AvatarRamId), http.StatusNotFound)
+				return
+			}
+			http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 			return
 		}
-		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
-		return
-	}
-	if user.Id != dbRam.UserId {
-		http.Error(w, fmt.Sprintf("it's not your ram"), http.StatusForbidden)
-		return
+		if user.Id != dbRam.UserId {
+			http.Error(w, fmt.Sprintf("it's not your ram"), http.StatusForbidden)
+			return
+		}
 	}
 
 	if user.Username != "" && !ValidateUsername(user.Username) {
