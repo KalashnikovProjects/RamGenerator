@@ -7,24 +7,36 @@
     </div>
     <div id="settings" class="user-popup">
         <div class="popup-menu">
-            <h3 class="text-center mb-5">Настройки аккаунта</h3>
+            <h3 class="text-center settings-title">Настройки аккаунта</h3>
             <div>
-                <label class="mb-4">
-                    Новое имя пользователя<br>
-                    <input class="settings-input" id="settings-username" type="text" name="" placeholder="">
-                </label>
-                <button>-></button>
-                <br>
-                <label>
-                    Новый пароль<br>
-                    <input class="settings-input" id="settings-password" type="password" name="" placeholder="">
-                </label>
-                <label>
-                    Повторите новый пароль<br>
-                    <input class="settings-input" id="settings-password-repeat" type="password" name="" placeholder="">
-                </label>
-                <button>-></button>
-
+                <form id="changeUsernameForm">
+                    <label for="settings-username" class="settings-label">Новое имя пользователя: </label>
+                    <input class="settings-input" id="settings-username" type="text" name="" placeholder="" autocomplete="username" maxlength="24">
+                    <script>document.getElementById("settings-username").placeholder = userInfoUsername</script>
+                    <br>
+                    <div id="username-message"></div>
+                    <button class="button-user settings-button mb-2">
+                        Сохранить
+                        <svg style="margin-left: 5px;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                        </svg></button>
+                </form>
+                <hr class="settings-hr">
+                <form id="changePasswordForm">
+                    <label for="settings-password" class="settings-label"> Новый пароль: </label>
+                    <input class="settings-input" id="settings-password" type="password" autocomplete="new-password" name="new-password">
+                    <br>
+                    <label for="settings-password-repeat" class="settings-label">Повторите пароль: </label>
+                    <input class="settings-input" id="settings-password-repeat" type="password" autocomplete="new-password" name="new-password-repeat">
+                    <br>
+                    <div id="password-message"></div>
+                    <button class="button-user settings-button">
+                        Сохранить
+                        <svg style="margin-left: 5px;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                        </svg></button>
+                </form>
+                <script>bindSettingsForms()</script>
             </div>
         </div>
     </div>

@@ -262,3 +262,27 @@
     width: 150px;
     height: 150px;
 }
+
+.settings-title {
+    margin-bottom: 3rem;
+}
+
+.settings-input {
+    padding: 4px 10px;
+}
+
+.settings-hr {
+    opacity: 0.2;
+}
+
+.settings-button {
+    font-size: 16px;
+    font-weight: 400;
+    padding: 8px 10px 8px 16px;
+}
+
+.settings-label {
+    font-weight: 400;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
