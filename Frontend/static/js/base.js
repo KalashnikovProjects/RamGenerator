@@ -76,7 +76,6 @@ function logOut() {
     sessionStorage.removeItem("user");
     deleteCookie("token");
     window.location.reload();
-
 }
 
 var loadingUser = true
@@ -86,7 +85,7 @@ loadUser().then(
     }
 )
 
-function displayUser() {
+async function displayUser() {
     if (loadingUser) {
         setTimeout(displayUser, 5)
         return;
@@ -122,7 +121,7 @@ function displayUser() {
     </div>`
 }
 
-function listenSearch() {
+async function listenSearch() {
     const search = document.getElementById("search-box");
 
     search.addEventListener("focusin", (event) => {
