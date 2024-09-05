@@ -296,7 +296,7 @@ class Generator {
                 error = "Произошла неизвестная ошибка на стороне сервера.";
                 // TODO подробнее про ошибки 500
                 break
-            //TODO либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз или без)
+            //TODO при других ошибках либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз или без)
             default:
                 console.log("Unknown error", data.code, data.error);
                 error = `Произошла неизвестная ошибка`;
@@ -421,58 +421,7 @@ class Generator {
         }
     }
 
-
-    _onclose(event) {
-        if (event.wasClean) {
-            console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
-        } else {
-            let reason;
-            switch (event.code) {
-                // TODO
-                case 1000:
-                    reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
-                    break;
-                case 1001:
-                    reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
-                    break;
-                case 1002:
-                    reason = "An endpoint is terminating the connection due to a protocol error";
-                    break;
-                case 1003:
-                    reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
-                    break;
-                case 1004:
-                    reason = "Reserved. The specific meaning might be defined in the future.";
-                    break
-                case 1005:
-                    reason = "No status code was actually present.";
-                    break
-                case 1006:
-                    reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
-                    break
-                case 1007:
-                    reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [https://www.rfc-editor.org/rfc/rfc3629] data within a text message).";
-                    break
-                case 1008:
-                    reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
-                    break
-                case 1009:
-                    reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
-                    break
-                case 1010:
-                    reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. Specifically, the extensions that are needed are: " + event.reason;
-                    break
-                case 1011:
-                    reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
-                    break
-                case 1015:
-                    reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
-                    break
-                default:
-                    reason = "Unknown reason";
-            }
-        }
-    }
+    _onclose(event) {}
 
     _onerror(error) {
         const content = document.getElementById("generation-content");
@@ -565,7 +514,7 @@ class RamPage {
                         break;
                 }
                 break;
-            //TODO либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз и без)
+            //TODO при других ошибках либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз и без)
             default:
                 console.log("Неизвестная ошибка", data.code, data.error);
                 error = `Неизвестная ошибка ${data.code} ${data.error}`;
@@ -648,15 +597,11 @@ function validatePassword(password, passwordRepeat = null) {
     return null;
 }
 
-async function responseProcess(el, response) {
+async function responseProcess(el, response, okCallback=null) {
     if (response.ok) {
-        el.classList.remove("text-danger");
-        el.innerText = "Успешно сохранено, теперь нужно будет перезайти в аккаунт"
-        setTimeout(() => {
-            sessionStorage.removeItem("user");
-            deleteCookie("token");
-            location.href = "/login";
-        }, 3000)
+        if ( !!okCallback && typeof okCallback === "function") {
+            okCallback();
+        }
     } else {
         el.classList.add("text-danger");
         const text = await response.text();
@@ -665,6 +610,9 @@ async function responseProcess(el, response) {
         switch (response.status) {
             case 404:
                 errorText = "Такого пользователя не существует";
+                break;
+            case 401:
+                errorText = "Вы не можете редактировать чужой профиль, возможно вы не вошли в аккаунт";
                 break;
             case 400:
                 if (text.startsWith("username must be ")) {
@@ -706,7 +654,17 @@ function changeUsername(event) {
         },
         body: JSON.stringify({"username": username})
     }).then(
-        (response) => {responseProcess(el, response)},
+        (response) => {responseProcess(el, response, () => {
+            sessionStorage.removeItem("user");
+            loadUser().then(() => {
+                el.classList.remove("text-danger");
+                el.innerText = "Успешно сохранено, сейчас страница перезагрузится"
+                setTimeout(() => {
+                    location.hash = "";
+                    location.href = `users/${user.username}`;
+                }, 3000)
+            });
+        })},
         (error) => {
             el.classList.add("text-danger");
             el.innerText = "Произошла ошибка при сохранении"
@@ -734,7 +692,10 @@ function changePassword(event) {
         },
         body: JSON.stringify({"password": password})
     }).then(
-        (response) => {responseProcess(el, response)},
+        (response) => {responseProcess(el, response, () => {
+            el.classList.remove("text-danger");
+            el.innerText = "Успешно сохранено";
+        })},
         (error) => {
             el.classList.add("text-danger");
             el.innerText = "Произошла ошибка при сохранении"
