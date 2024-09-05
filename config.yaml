@@ -45,6 +45,7 @@ generation:
     - 10
 
 image:
+  side: 400
   kandinsky_endpoint: "https://api-key.fusionbrain.ai/"
   default_kandinsky_style: "DEFAULT"
 

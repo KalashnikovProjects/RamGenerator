@@ -30,6 +30,7 @@ class PROMPTS:
 
 
 class KANDINSKY:
+    SIDE = yaml_config["image"]["side"]
     ENDPOINT = yaml_config["image"]["kandinsky_endpoint"]
     KEY = os.getenv("KANDINSKY_KEY")
     SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")

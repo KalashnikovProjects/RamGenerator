@@ -75,7 +75,7 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         api = ai_generators.ImageGenerator(config.KANDINSKY.ENDPOINT, config.KANDINSKY.KEY,
                                            config.KANDINSKY.SECRET_KEY)
         model_id = api.get_model()
-        uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, model_id)
+        uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, model_id, config.KANDINSKY.SIDE, config.KANDINSKY.SIDE)
 
         try:
             image = api.check_generation(uuid)
