@@ -65,7 +65,7 @@ class ImageGenerator:
         data = response.json()
         return data[0]['id']
 
-    def generate(self, prompt, style, model, images=1, width=1024, height=1024):
+    def generate(self, prompt, style, model, width, height, images=1):
         params = {
             "type": "GENERATE",
             "style": style,
