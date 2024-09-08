@@ -8,9 +8,12 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/config"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/database"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
+	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/logs"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/ram_image_generator"
 	pb "github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/proto_generated"
 	"log"
+	"log/slog"
+	"os"
 )
 
 // TestContext TODO: ПЕРЕНЕСТИ В ТЕСТЫ, сделать автоматическими
@@ -64,8 +67,9 @@ func TestContext(ctx context.Context, db *sql.DB, gRPCConn pb.RamGeneratorClient
 }
 
 func main() {
+	logs.InitStdoutLogs(slog.LevelInfo)
 	config.InitConfigs()
-	log.Println("Запуск go сервиса...")
+	slog.Info("Go api starting...")
 
 	ctx := context.Background()
 	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Hostname, config.Conf.Database.Port, config.Conf.Database.DBName)
@@ -75,6 +79,7 @@ func main() {
 	server := api.NewRamGeneratorServer(ctx, fmt.Sprintf(":%d", config.Conf.Ports.Api), db, gRPCConn)
 	err := api.ServeServer(ctx, server)
 	if err != nil {
-		log.Fatal("server shutdown with error:", err)
+		slog.Error("Go api shutdown with error", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 }

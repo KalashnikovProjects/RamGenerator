@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	"log"
+	"log/slog"
 	"reflect"
 	"strings"
 	"time"
@@ -59,11 +59,10 @@ func GenerateQueryAndArgsForUpdate(table string, fields map[string]any, conditio
 func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("opening db error", slog.String("error", err.Error()))
 		return nil, err
 	}
 
-	// Создание таблиц, если они не существуют
 	_, err = db.ExecContext(ctx, `
 		CREATE EXTENSION IF NOT EXISTS CITEXT;
 		CREATE TABLE IF NOT EXISTS users (
@@ -87,9 +86,11 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 		);
 	`)
 	if err != nil {
+		slog.Error("db exec error", slog.String("error", err.Error()))
 		return nil, err
 	}
 	if err = db.PingContext(ctx); err != nil {
+		slog.Error("db ping error", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -103,14 +104,17 @@ func GeneratePostgresConnectionString(user, password, host string, pgPort int, d
 func CreateDBConnectionContext(ctx context.Context, connectionString string) *sql.DB {
 	var db *sql.DB
 	var err error
+	slog.Info("connecting to db")
+
 	for {
 		db, err = OpenDb(ctx, connectionString)
 		if err == nil {
 			break
 		}
-		log.Print("retry db connection, error: ", err)
+		slog.Debug("retry db connection", slog.String("error", err.Error()))
+
 		time.Sleep(2 * time.Second)
 	}
-	log.Print("successful connected to db")
+	slog.Info("successful connected to db")
 	return db
 }

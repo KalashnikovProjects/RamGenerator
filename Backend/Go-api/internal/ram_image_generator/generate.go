@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -45,6 +45,8 @@ func AuthInterceptor(token string) grpc.UnaryClientInterceptor {
 func CreateGRPCConnection() pb.RamGeneratorClient {
 	var conn *grpc.ClientConn
 	var err error
+	slog.Info("connecting gRPC")
+
 	for {
 		conn, err = grpc.NewClient(
 			fmt.Sprintf("%s", config.Conf.GRPC.Hostname),
@@ -54,10 +56,10 @@ func CreateGRPCConnection() pb.RamGeneratorClient {
 		if err == nil {
 			break
 		}
-		log.Print("retry gRPC connection, error: ", err)
+		slog.Debug("retry gRPC connection", slog.String("error", err.Error()))
 		time.Sleep(2 * time.Second)
 	}
-	log.Print("GRPC подключен")
+	slog.Info("gRPC connected")
 	return pb.NewRamGeneratorClient(conn)
 }
 
@@ -73,6 +75,8 @@ func GenerateStartPrompt(context context.Context, grpcClient pb.RamGeneratorClie
 				return "", CensorshipError
 			}
 		}
+		slog.Error("generate start prompt grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
+
 		return "", err
 	}
 	return prompt.Prompt, nil
@@ -91,6 +95,7 @@ func GenerateHybridPrompt(context context.Context, grpcClient pb.RamGeneratorCli
 				return "", CensorshipError
 			}
 		}
+		slog.Error("generate hybrid prompt grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
 		return "", err
 	}
 	return prompt.Prompt, nil
@@ -100,6 +105,7 @@ func GenerateRamImage(context context.Context, grpcClient pb.RamGeneratorClient,
 	generatedImage, err := grpcClient.GenerateImage(context, &pb.GenerateImageRequest{Prompt: prompt, Style: config.Conf.Image.DefaultKandinskyStyle})
 	if err != nil {
 		st, ok := status.FromError(err)
+		slog.Error("generate ram image grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
 		if ok && st.Code() == codes.DeadlineExceeded {
 			return "", ImageGenerationTimeout
 		}
@@ -116,19 +122,22 @@ func UploadImage(base64Image string) (string, error) {
 	resp, err := http.PostForm(fmt.Sprintf("https://freeimage.host/api/1/upload"), fromData)
 
 	if err != nil {
-		log.Println(err)
+		slog.Error("image upload request error", slog.String("error", err.Error()))
 		return "", err
 	}
 	var jsonResp imageUploadApiResponse
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
+		slog.Error("image upload request read json error", slog.String("error", err.Error()))
 		return "", err
 	}
 	err = json.Unmarshal(data, &jsonResp)
 	if err != nil {
+		slog.Error("image upload unmarshal json error", slog.String("error", err.Error()))
 		return "", err
 	}
 	if jsonResp.StatusCode != 200 {
+		slog.Error("image upload request error", slog.Int("statusCode", jsonResp.StatusCode), slog.Any("response", jsonResp))
 		return "", fmt.Errorf("unexpected image upload api error")
 	}
 	return jsonResp.Image.Url, nil
@@ -141,6 +150,7 @@ func GenerateDescription(context context.Context, grpcClient pb.RamGeneratorClie
 		if ok && st.Code() == codes.InvalidArgument {
 			return "", CensorshipError
 		}
+		slog.Error("generate description grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
 		return "", err
 	}
 	return description.Description, nil

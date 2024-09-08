@@ -11,8 +11,9 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
-	"log"
+	"log/slog"
 	"net/http"
+	"strings"
 )
 
 func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +26,7 @@ func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", params["username"]), http.StatusNotFound)
 			return
 		}
-		log.Println(err)
+		slog.Error("unexpected db error", slog.String("endpoint", "get user"), slog.String("function", "database.GetUserByUsernameContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -33,11 +34,13 @@ func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	user.Password = ""
 	res, err := json.Marshal(user)
 	if err != nil {
+		slog.Error("json marshal error", slog.String("endpoint", "get user"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
+		slog.Error("response writing error", slog.String("endpoint", "get user"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("response writing error"), http.StatusInternalServerError)
 		return
 	}
@@ -68,6 +71,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetUserContext"), slog.String("endpoint", fmt.Sprintf("%s user", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -83,6 +87,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf("no rams with id = %d", user.AvatarRamId), http.StatusNotFound)
 				return
 			}
+			slog.Error("unexpected db error", slog.String("function", "database.GetRamContext"), slog.String("endpoint", fmt.Sprintf("%s user", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 			http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 			return
 		}
@@ -99,6 +104,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 	if user.Password != "" {
 		hashed, err := auth.GenerateHashedPassword(user.Password)
 		if err != nil {
+			slog.Error("hashing password error", slog.String("function", "auth.GenerateHashedPassword"), slog.String("endpoint", fmt.Sprintf("%s user", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 			http.Error(w, fmt.Sprintf("hashing password error"), http.StatusInternalServerError)
 			return
 		}
@@ -124,6 +130,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("username %s is already taken", user.Username), http.StatusBadRequest)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.UpdateUserByUsernameContext"), slog.String("endpoint", fmt.Sprintf("%s user", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -139,6 +146,7 @@ func (h *Handlers) DeleteUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("endpoint", "delete user"), slog.String("function", "database.GetUserContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -153,6 +161,7 @@ func (h *Handlers) DeleteUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", params["username"]), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("endpoint", "delete user"), slog.String("function", "database.DeleteUserByUsernameContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}

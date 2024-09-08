@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// TradeWebsocket TODO: https://habr.com/ru/companies/otus/articles/781748/
+// TradeWebsocket TODO
 func (h *Handlers) TradeWebsocket(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -13,7 +13,6 @@ func (h *Handlers) TradeWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	// цикл обработки сообщений
 	for {
 		messageType, message, err := ws.ReadMessage()
 		if err != nil {
@@ -22,7 +21,6 @@ func (h *Handlers) TradeWebsocket(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("Received: %s", message)
 
-		// эхо ансвер
 		if err := ws.WriteMessage(messageType, message); err != nil {
 			log.Println(err)
 			break

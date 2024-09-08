@@ -10,7 +10,7 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/database"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
 	"github.com/lib/pq"
-	"log"
+	"log/slog"
 	"net/http"
 	"regexp"
 )
@@ -49,6 +49,7 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	hashed, err := auth.GenerateHashedPassword(reqUser.Password)
 	if err != nil {
+		slog.Error("hashing password error", slog.String("function", "auth.GenerateHashedPassword"), slog.String("endpoint", "register"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("hashing password error"), http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +70,7 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("username %s is already taken", user.Username), http.StatusBadRequest)
 			return
 		}
-		log.Println("registration db error", err)
+		slog.Error("unexpected db error", slog.String("function", "database.CreateUserContext"), slog.String("endpoint", "register"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -88,11 +89,13 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 	// return
 	token, err := auth.GenerateToken(user.Id)
 	if err != nil {
+		slog.Error("token generation error", slog.String("function", "auth.GenerateToken"), slog.String("endpoint", "register"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("token generation error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write([]byte(token))
 	if err != nil {
+		slog.Error("token writing error", slog.String("endpoint", "register"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("token writing error"), http.StatusInternalServerError)
 		return
 	}
@@ -120,7 +123,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", reqUser.Username), http.StatusNotFound)
 			return
 		}
-		log.Println("login db error", err)
+		slog.Error("unexpected db error", slog.String("endpoint", "login"), slog.String("function", "database.GetUserByUsernameContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -132,11 +135,13 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := auth.GenerateToken(dbUser.Id)
 	if err != nil {
+		slog.Error("token generation error", slog.String("function", "auth.GenerateToken"), slog.String("endpoint", "login"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("token generation error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write([]byte(token))
 	if err != nil {
+		slog.Error("token writing error", slog.String("endpoint", "login"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("token writing error"), http.StatusInternalServerError)
 		return
 	}
@@ -151,6 +156,7 @@ func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("endpoint", "me"), slog.String("function", "database.GetUserContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -158,11 +164,13 @@ func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 	dbUser.Password = ""
 	res, err := json.Marshal(dbUser)
 	if err != nil {
+		slog.Error("json marshal error", slog.String("endpoint", "me"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
+		slog.Error("response writing error", slog.String("endpoint", "me"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("response writing error"), http.StatusInternalServerError)
 		return
 	}
