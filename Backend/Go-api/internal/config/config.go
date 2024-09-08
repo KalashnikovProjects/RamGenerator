@@ -87,10 +87,12 @@ func InitConfigs() {
 
 	if err != nil {
 		slog.Error("Not found config.yaml", slog.Any("error", err))
+		os.Exit(1)
 	}
 	err = yaml.Unmarshal(yamlFile, &settings)
 	if err != nil {
 		slog.Error("Unmarshal yaml error", slog.Any("error", err))
+		os.Exit(1)
 	}
 	secrets := SecretConfig{
 		GRPC: GRPCConfig{
