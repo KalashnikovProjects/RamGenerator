@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 )
@@ -42,11 +42,13 @@ func InitConfigs() {
 	yamlFile, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", rootPath))
 
 	if err != nil {
-		log.Fatalf("Unmarshal yaml error: %v", err)
+		slog.Error("Yaml file not found error", slog.Any("error", err))
+		os.Exit(1)
 	}
 	err = yaml.Unmarshal(yamlFile, &configData)
 	if err != nil {
-		log.Fatalf("Unmarshal yaml error: %v", err)
+		slog.Error("Unmarshal yaml error", slog.Any("error", err))
+		os.Exit(1)
 	}
 	Conf = &Config{
 		ApiUrl:        configData.Frontend.ApiUrl,

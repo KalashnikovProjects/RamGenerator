@@ -1,11 +1,14 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/KalashnikovProjects/RamGenerator/Go-static-server/internal/config"
+	"github.com/didip/tollbooth"
 	"github.com/gorilla/mux"
+	"golang.org/x/sync/errgroup"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,7 +25,7 @@ type ErrorTemplateData struct {
 	TemplateData
 }
 
-func Run() {
+func NewStaticServer(ctx context.Context, Addr string) *http.Server {
 	router := mux.NewRouter()
 
 	router.NotFoundHandler = http.HandlerFunc(ErrorPage404)
@@ -36,8 +39,23 @@ func Run() {
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(config.Conf.CdnFilesPath))))
 
-	fmt.Printf("Static server started at http://localhost:%d\n", config.Conf.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Conf.Port), router))
+	slog.Info("Creating static server", slog.String("addr", Addr))
+	return &http.Server{
+		Addr:    Addr,
+		Handler: tollbooth.LimitHandler(tollbooth.NewLimiter(50, nil), LoggingMiddleware(router)),
+	}
+}
+func ServeServer(ctx context.Context, server *http.Server) error {
+	slog.Info("Running static server", slog.String("addr", server.Addr))
+
+	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		err := server.ListenAndServe()
+		slog.Error("Go static server error", slog.String("error", err.Error()))
+		return err
+	})
+	<-gCtx.Done()
+	return server.Shutdown(ctx)
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
