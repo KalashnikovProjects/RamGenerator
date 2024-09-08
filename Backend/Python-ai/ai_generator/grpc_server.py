@@ -33,7 +33,7 @@ class AuthInterceptor(grpc.ServerInterceptor):
 class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
     @staticmethod
     def GenerateStartPrompt(request, context, **kwargs):
-        logging.info(f"Генерация промпта, промпт:{request.user_prompt}")
+        logging.info(f"Generating prompt from prompt:{request.user_prompt}")
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_START_PROMPT,
@@ -48,11 +48,12 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt contains illegal content")
         except Exception as e:
+            logging.exception("Generate start prompt error", e)
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
     @staticmethod
     def GenerateHybridPrompt(request, context, **kwargs):
-        logging.info(f"Генерация гибрида промпта, промпт:{request.user_prompt}")
+        logging.info(f"Generating hybrid prompt from prompt:{request.user_prompt}")
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT,
@@ -67,11 +68,13 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt or descriptions contains illegal content")
         except Exception as e:
+            logging.exception("Generate hybrid prompt error", e)
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
     @staticmethod
     def GenerateImage(request, context, **kwargs):
-        logging.info(f"Генерация изображения, промпт:{request.prompt}")
+        logging.info(f"Generating image from prompt:{request.prompt}")
+
         api = ai_generators.ImageGenerator(config.KANDINSKY.ENDPOINT, config.KANDINSKY.KEY,
                                            config.KANDINSKY.SECRET_KEY)
         model_id = api.get_model()
@@ -83,13 +86,15 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         except ai_generators.ImageGenerationTimeoutError:
             context.abort(grpc.StatusCode.DEADLINE_EXCEEDED, f"The waiting time for image generation has been exceeded")
         except Exception as e:
+            logging.exception("Generate image error", e)
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
         return context
 
     @staticmethod
     def GenerateDescription(request, context, **kwargs):
-        logging.info(f"Генерация описания")
+        logging.info(f"Generating description")
+
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT,
@@ -113,6 +118,7 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")
         except Exception as e:
+            logging.exception("Generate description error", e)
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
 
     @classmethod
