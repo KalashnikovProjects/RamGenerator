@@ -8,8 +8,10 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/database"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
 	"github.com/gorilla/mux"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (h *Handlers) GetRams(w http.ResponseWriter, r *http.Request) {
@@ -22,23 +24,27 @@ func (h *Handlers) GetRams(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", user.Username), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetUserByUsernameContext"), slog.String("endpoint", "get rams"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
 
 	rams, err := database.GetRamsByUsernameContext(ctx, h.db, params["username"])
 	if err != nil {
+		slog.Error("unexpected db error", slog.String("function", "database.GetRamsByUsernameContext"), slog.String("endpoint", "get rams"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
 
 	res, err := json.Marshal(rams)
 	if err != nil {
+		slog.Error("json marshal error", slog.String("endpoint", "get rams"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
+		slog.Error("response writing error", slog.String("endpoint", "get rams"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("response writing error"), http.StatusInternalServerError)
 		return
 	}
@@ -60,6 +66,7 @@ func (h *Handlers) GetRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", user.Username), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetUserByUsernameContext"), slog.String("endpoint", "get ram"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -70,6 +77,7 @@ func (h *Handlers) GetRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no rams with id = %d", id), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetRamContext"), slog.String("endpoint", "get ram"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -81,11 +89,13 @@ func (h *Handlers) GetRam(w http.ResponseWriter, r *http.Request) {
 
 	res, err := json.Marshal(ram)
 	if err != nil {
+		slog.Error("json marshal error", slog.String("endpoint", "get ram"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
+		slog.Error("response writing error", slog.String("endpoint", "get ram"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("response writing error"), http.StatusInternalServerError)
 		return
 	}
@@ -102,6 +112,7 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetUserContext"), slog.String("endpoint", fmt.Sprintf("%s ram", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -122,6 +133,7 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no rams with id = %d", id), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("function", "database.GetRamContext"), slog.String("endpoint", fmt.Sprintf("%s ram", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -152,6 +164,7 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 	ram.UserId = 0
 	err = database.UpdateRamContext(ctx, h.db, id, ram)
 	if err != nil {
+		slog.Error("unexpected db error", slog.String("function", "database.UpdateRamContext"), slog.String("endpoint", fmt.Sprintf("%s ram", strings.ToLower(r.Method))), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -168,6 +181,7 @@ func (h *Handlers) DeleteRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("endpoint", "delete ram"), slog.String("function", "database.GetUserContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -187,6 +201,7 @@ func (h *Handlers) DeleteRam(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("no rams with id = %d", id), http.StatusNotFound)
 			return
 		}
+		slog.Error("unexpected db error", slog.String("endpoint", "delete ram"), slog.String("function", "database.GetRamContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
@@ -197,6 +212,7 @@ func (h *Handlers) DeleteRam(w http.ResponseWriter, r *http.Request) {
 
 	err = database.DeleteRamContext(ctx, h.db, id)
 	if err != nil {
+		slog.Error("unexpected db error", slog.String("endpoint", "delete ram"), slog.String("function", "database.DeleteRamContext"), slog.String("error", err.Error()))
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}

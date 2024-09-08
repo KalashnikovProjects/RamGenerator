@@ -5,7 +5,7 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 )
@@ -81,17 +81,16 @@ type Config struct {
 
 func InitConfigs() {
 	RootPath = getEnv("ROOT_PATH", "../..")
-
 	err := godotenv.Load(fmt.Sprintf("%s/.env", RootPath))
 	var settings *SettingsConfig
 	yamlFile, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", RootPath))
 
 	if err != nil {
-		log.Fatalf("Not found config.yaml: %v", err)
+		slog.Error("Not found config.yaml", slog.Any("error", err))
 	}
 	err = yaml.Unmarshal(yamlFile, &settings)
 	if err != nil {
-		log.Fatalf("Unmarshal yaml error: %v", err)
+		slog.Error("Unmarshal yaml error", slog.Any("error", err))
 	}
 	secrets := SecretConfig{
 		GRPC: GRPCConfig{

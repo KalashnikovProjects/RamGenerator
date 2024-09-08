@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/uniseg"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -137,6 +138,7 @@ func checkWsUserAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webs
 			WebsocketSendJSON(ctx, ws, wsError{"can't recognize your permissions, please relogin", 401})
 			return entities.User{}, err
 		}
+		slog.Error("unexpected db error", slog.String("place", "checkWsUserAccess"), slog.String("function", "database.GetUserContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return entities.User{}, err
 	}
@@ -160,6 +162,7 @@ func checkWsRamAccess(ctx context.Context, db database.SQLTXQueryExec, ws *webso
 			WebsocketSendJSON(ctx, ws, wsError{"ram not found", 404})
 			return entities.Ram{}, err
 		}
+		slog.Error("unexpected db error", slog.String("place", "checkWsRamAccess"), slog.String("function", "database.GetRamContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return entities.Ram{}, err
 	}
@@ -221,7 +224,8 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 			if clicked >= amount {
 				err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "success clicked"})
 				if err != nil {
-					WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+					slog.Error("send message error", slog.String("place", "websocketNeedClicks"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+					WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
 					return err
 				}
 				return nil
@@ -266,6 +270,7 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 			WebsocketSendJSON(ctx, ws, wsError{"cant tap or create 2 rams parallel", 409})
 			return
 		}
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketClicker"), slog.String("function", "database.UpdateUserClickersBlockedIfCan"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return
 	}
@@ -350,6 +355,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			WebsocketSendJSON(ctx, ws, wsError{"cant tap or create 2 rams parallel", 409})
 			return
 		}
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "database.UpdateUserClickersBlockedIfCan"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return
 	}
@@ -365,7 +371,8 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "need ram prompt"})
 	}
 	if err != nil {
-		WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+		slog.Error("send message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+		WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
 		return
 	}
 
@@ -394,6 +401,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		} else {
 			rams, err := database.GetRamsByUserIdContext(ctx, h.db, user.Id)
 			if err != nil {
+				slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "database.GetRamsByUserIdContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 				WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 				ws.Close()
 				return
@@ -415,6 +423,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 				ws.Close()
 				return
 			}
+			slog.Error("prompt generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateHybridPrompt"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"prompt generating error", 500})
 			ws.Close()
 			return
@@ -423,16 +432,19 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		imageBase64, err := ram_image_generator.GenerateRamImage(ctx, h.gRPCClient, prompt)
 		if err != nil {
 			if errors.Is(err, ram_image_generator.ImageGenerationTimeout) {
+				slog.Error("image generation timeout", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 				WebsocketSendJSON(ctx, ws, wsError{"image generation timeout", 500})
 				ws.Close()
 				return
 			}
-			WebsocketSendJSON(ctx, ws, wsError{"prompt generating error", 500})
+			slog.Error("image generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+			WebsocketSendJSON(ctx, ws, wsError{"image generating error", 500})
 			ws.Close()
 			return
 		}
 		imageUrl, err := ram_image_generator.UploadImage(imageBase64)
 		if err != nil {
+			slog.Error("image uploading error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.UploadImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image uploading error", 500})
 			ws.Close()
 			return
@@ -444,13 +456,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 				ws.Close()
 				return
 			}
+			slog.Error("image description generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateDescription"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image description generating error", 500})
 			ws.Close()
 			return
 		}
 		err = WebsocketSendJSON(ctx, ws, map[string]string{"status": "image generated"})
 		if err != nil {
-			WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+			slog.Error("send message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+			WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
 			ws.Close()
 			return
 		}
@@ -470,7 +484,8 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 	err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "need clicks", "clicks": needClicks})
 	if err != nil {
-		WebsocketSendJSON(ctx, ws, wsError{"send message error", 400})
+		slog.Error("send message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+		WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
 		return
 	}
 	err = h.websocketNeedClicks(ctx, ws, needClicks)
@@ -481,6 +496,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	ram := <-aiGeneratedRam
 	tx, err := h.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "BeginTx"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return
 	}
@@ -488,6 +504,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	ram.Id = ramId
 	if err != nil {
 		tx.Rollback()
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "database.CreateRamContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return
 	}
@@ -495,10 +512,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	err = database.UpdateUserContext(ctx, tx, user.Id, entities.User{DailyRamGenerationTime: int(time.Now().Unix()), RamsGeneratedLastDay: ramsGeneratedLastDay + 1})
 	if err != nil {
 		tx.Rollback()
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "database.UpdateUserContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
 		return
 	}
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "Commit"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+		WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
+	}
 	WebsocketSendJSON(ctx, ws, ram)
 	return
 }
