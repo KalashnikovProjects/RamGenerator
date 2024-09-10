@@ -72,7 +72,7 @@ func main() {
 	slog.Info("Go api starting...")
 
 	ctx := context.Background()
-	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Hostname, config.Conf.Database.Port, config.Conf.Database.DBName)
+	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Host, config.Conf.Database.DBName)
 	db := database.CreateDBConnectionContext(ctx, pgConnectionString)
 	gRPCConn := ram_image_generator.CreateGRPCConnection()
 

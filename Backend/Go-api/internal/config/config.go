@@ -14,13 +14,12 @@ var RootPath = getEnv("ROOT_PATH", "/")
 var Conf *Config
 
 type GRPCConfig struct {
-	Hostname string
-	Token    string
+	Host  string
+	Token string
 }
 
 type DatabaseConfig struct {
-	Hostname string
-	Port     int
+	Host     string
 	User     string
 	Password string
 	DBName   string
@@ -96,12 +95,11 @@ func InitConfigs() {
 	}
 	secrets := SecretConfig{
 		GRPC: GRPCConfig{
-			Hostname: getEnv("GRPC_HOSTNAME", "localhost:50051"),
-			Token:    getEnv("GRPC_SECRET_TOKEN", ""),
+			Host:  getEnv("GRPC_HOST", "localhost:50051"),
+			Token: getEnv("GRPC_SECRET_TOKEN", ""),
 		},
 		Database: DatabaseConfig{
-			Hostname: getEnv("POSTGRES_HOSTNAME", "localhost"),
-			Port:     toInt(getEnv("POSTGRES_PORT", "5432")),
+			Host:     getEnv("POSTGRES_HOST", "localhost:5432"),
 			User:     getEnv("POSTGRES_USER", ""),
 			Password: getEnv("POSTGRES_PASSWORD", ""),
 			DBName:   getEnv("POSTGRES_DB", ""),

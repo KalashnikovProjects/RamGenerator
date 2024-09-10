@@ -97,8 +97,8 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	return db, nil
 }
 
-func GeneratePostgresConnectionString(user, password, host string, pgPort int, dbName string) string {
-	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s?sslmode=disable`, user, password, host, pgPort, dbName)
+func GeneratePostgresConnectionString(user, password, host string, dbName string) string {
+	return fmt.Sprintf(`postgresql://%s:%s@%s/%s?sslmode=disable`, user, password, host, dbName)
 }
 
 func CreateDBConnectionContext(ctx context.Context, connectionString string) *sql.DB {

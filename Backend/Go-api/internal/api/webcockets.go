@@ -396,6 +396,7 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		defer close(aiGeneratedRam)
 
 		var prompt string
+		var err error
 		if user.DailyRamGenerationTime == 0 {
 			prompt, err = ram_image_generator.GenerateStartPrompt(ctx, h.gRPCClient, userPrompt)
 		} else {
