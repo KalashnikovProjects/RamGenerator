@@ -30,8 +30,8 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_HOSTNAME: postgres
-      GRPC_HOSTNAME: python-ai
+      POSTGRES_HOST: postgres:5432
+      GRPC_HOSTNAME: python-ai:50051
     ports:
       - "8082:8082"
     depends_on:
@@ -54,7 +54,8 @@ services:
     env_file:
       - .env
     environment:
-      GRPC_HOSTNAME: python-ai
+      GRPC_PORT: 50051
+      GRPC_HOST: python-ai:50051
     ports:
       - "50051:50051"
 

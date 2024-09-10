@@ -49,7 +49,7 @@ func CreateGRPCConnection() pb.RamGeneratorClient {
 
 	for {
 		conn, err = grpc.NewClient(
-			fmt.Sprintf("%s", config.Conf.GRPC.Hostname),
+			fmt.Sprintf("%s", config.Conf.GRPC.Host),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(AuthInterceptor(config.Conf.GRPC.Token)),
 		)
