@@ -9,9 +9,13 @@ COPY ./config.yaml ./config.yaml
 
 RUN cd Backend/Go-api && CGO_ENABLED=0 go build -ldflags='-extldflags "-static"' -o compiled ./cmd
 
+FROM alpine AS certs
+RUN apk add --no-cache ca-certificates
+
 FROM scratch
 COPY --from=builder /app/Backend/Go-api/compiled /app/Backend/Go-api/compiled
 COPY --from=builder /app/config.yaml /app/config.yaml
+COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 
 ENV ROOT_PATH=app
 EXPOSE 8082
