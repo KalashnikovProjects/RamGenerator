@@ -127,14 +127,11 @@
 .left-button-user {
     padding: 0.25rem 0.75rem 0.4rem 0.75rem;
     font-size: 1.25rem;
+    max-width: 300px;
 }
 
 .first-button-user {
-    margin-top: 7vh;
-}
-
-.last-button-user {
-    margin-top: 10vh;
+    margin-top: 3vh;
 }
 
 .user-card-avatar {
@@ -164,6 +161,26 @@
     .user-card-username {
         text-align: center;
     }
+
+    .last-button-user {
+        margin-top: 10vh;
+    }
+
+    .first-button-user {
+        margin-top: 7vh;
+    }
+
+    .left-button-user {
+        max-width: unset;
+    }
+}
+
+@media (max-width: 399px) {
+    .left-button-user {
+        padding: 0.2rem 0.6rem 0.3rem 0.6rem;
+        font-size: 1rem;
+        max-width: 200px;
+    }
 }
 
 @media (min-width: 1000px) {
@@ -178,7 +195,7 @@
     }
 
     .user-card {
-        flex-direction: row;
+        flex-direction: column;
         padding: 0.5rem;
         border-bottom: 1px solid rgba(255,255,255,0.3);
     }
