@@ -120,7 +120,6 @@ func UploadImage(base64Image string) (string, error) {
 		"source": {base64Image},
 	}
 	resp, err := http.PostForm(fmt.Sprintf("https://freeimage.host/api/1/upload"), fromData)
-
 	if err != nil {
 		slog.Error("image upload request error", slog.String("error", err.Error()))
 		return "", err
@@ -128,7 +127,7 @@ func UploadImage(base64Image string) (string, error) {
 	var jsonResp imageUploadApiResponse
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("image upload request read json error", slog.String("error", err.Error()))
+		slog.Error("image upload request read error", slog.String("error", err.Error()))
 		return "", err
 	}
 	err = json.Unmarshal(data, &jsonResp)
