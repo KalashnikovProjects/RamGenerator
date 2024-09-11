@@ -112,7 +112,8 @@ func wsFirstMessageAuthorization(ctx context.Context, ws *websocket.Conn) (int, 
 
 	messageType, wsMessage, err := ws.ReadMessage()
 	if err != nil {
-		WebsocketSendJSON(ctx, ws, wsError{"read message error", 400})
+		slog.Error("read message error", slog.String("place", "wsFirstMessageAuthorization"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+		WebsocketSendJSON(ctx, ws, wsError{"read message error", 500})
 		return 0, err
 	}
 	if messageType != websocket.TextMessage {
@@ -206,7 +207,11 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 		default:
 			messageType, wsMessage, err := ws.ReadMessage()
 			if err != nil {
-				WebsocketSendJSON(ctx, ws, wsError{"read message error", 400})
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return err
+				}
+				slog.Error("read message error", slog.String("place", "websocketNeedClicks"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+				WebsocketSendJSON(ctx, ws, wsError{"read message error", 500})
 				return err
 			}
 			if messageType != websocket.TextMessage {
@@ -224,6 +229,9 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 			if clicked >= amount {
 				err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "success clicked"})
 				if err != nil {
+					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+						return err
+					}
 					slog.Error("send message error", slog.String("place", "websocketNeedClicks"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 					WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
 					return err
@@ -297,7 +305,8 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 		default:
 			messageType, wsMessage, err := ws.ReadMessage()
 			if err != nil {
-				WebsocketSendJSON(ctx, ws, wsError{"read message error", 400})
+				slog.Error("read message error", slog.String("place", "upgradedWebsocketClicker"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+				WebsocketSendJSON(ctx, ws, wsError{"read message error", 500})
 				return
 			}
 			if messageType != websocket.TextMessage {
@@ -378,7 +387,8 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 
 	messageType, wsMessage, err := ws.ReadMessage()
 	if err != nil {
-		WebsocketSendJSON(ctx, ws, wsError{"read message error", 400})
+		slog.Error("read message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+		WebsocketSendJSON(ctx, ws, wsError{"read message error", 500})
 		return
 	}
 	if messageType != websocket.TextMessage {
@@ -392,8 +402,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 	aiGeneratedRam := make(chan entities.Ram)
+	generated := false
+
 	go func() {
-		defer close(aiGeneratedRam)
+		defer func() {
+			if !generated {
+				cancel()
+			}
+			close(aiGeneratedRam)
+		}()
 
 		var prompt string
 		var err error
@@ -404,7 +421,6 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			if err != nil {
 				slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "database.GetRamsByUserIdContext"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 				WebsocketSendJSON(ctx, ws, wsError{"unexpected db error", 500})
-				ws.Close()
 				return
 			}
 			var descriptions []string
@@ -416,17 +432,14 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		if err != nil {
 			if errors.Is(err, ram_image_generator.CensorshipError) {
 				WebsocketSendJSON(ctx, ws, wsError{"user prompt or rams descriptions contains illegal content", 400})
-				ws.Close()
 				return
 			}
 			if errors.Is(err, ram_image_generator.TooLongPromptError) {
 				WebsocketSendJSON(ctx, ws, wsError{fmt.Sprintf("user prompt too long (max %d symbols)", config.Conf.Generation.MaxPromptLen), 400})
-				ws.Close()
 				return
 			}
 			slog.Error("prompt generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateHybridPrompt"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"prompt generating error", 500})
-			ws.Close()
 			return
 		}
 
@@ -435,40 +448,35 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			if errors.Is(err, ram_image_generator.ImageGenerationTimeout) {
 				slog.Error("image generation timeout", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 				WebsocketSendJSON(ctx, ws, wsError{"image generation timeout", 500})
-				ws.Close()
 				return
 			}
 			slog.Error("image generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image generating error", 500})
-			ws.Close()
 			return
 		}
 		imageUrl, err := ram_image_generator.UploadImage(imageBase64)
 		if err != nil {
 			slog.Error("image uploading error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.UploadImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image uploading error", 500})
-			ws.Close()
 			return
 		}
 		imageDescription, err := ram_image_generator.GenerateDescription(ctx, h.gRPCClient, imageUrl)
 		if err != nil {
 			if errors.Is(err, ram_image_generator.CensorshipError) {
 				WebsocketSendJSON(ctx, ws, wsError{"user prompt or rams descriptions contains illegal content", 400})
-				ws.Close()
 				return
 			}
 			slog.Error("image description generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateDescription"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image description generating error", 500})
-			ws.Close()
 			return
 		}
 		err = WebsocketSendJSON(ctx, ws, map[string]string{"status": "image generated"})
 		if err != nil {
 			slog.Error("send message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
-			ws.Close()
 			return
 		}
+		generated = true
 		aiGeneratedRam <- entities.Ram{UserId: user.Id, Description: imageDescription, ImageUrl: imageUrl}
 	}()
 
@@ -495,6 +503,9 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 	}
 
 	ram := <-aiGeneratedRam
+	if !generated {
+		return
+	}
 	tx, err := h.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "BeginTx"), slog.Bool("websocket", true), slog.String("error", err.Error()))
