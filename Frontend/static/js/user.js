@@ -1,5 +1,6 @@
 let userInfo, userRams, ramGenerator, ramPage;
 
+const WS_PROTOCOL = "ws"
 const notFoundRam = new Error("Ram not found or ot not yours")
 
 function show404() {
@@ -238,7 +239,7 @@ class Generator {
 
     connectWs() {
         let apiUrl = new URL(API_URL);
-        apiUrl.protocol = "ws";
+        apiUrl.protocol = WS_PROTOCOL;
         this.websocket = new WebSocket(`${apiUrl}/users/${user.username}/ws/generate-ram`);
         this.websocket.onopen = this._onopen.bind(this);
         this.websocket.onmessage = this._onmessage.bind(this);
@@ -456,7 +457,7 @@ class RamPage {
              <h4 id="ram-description" class="text-center">${this.ram.description}</h2>
              <div id="ram-content" class="text-center">
                 <img id="ram-clicker" class="ram-image mt-5" src="${this.ram.image_url}" alt="ram">
-                <h3 id="ram-clicked" class="mt-3">${this.ram.taps} тапов</h3>
+                <div id="taps-line" class="mt-3"><h3 id="ram-clicked">${this.ram.taps} тапов</h3></div>
              </div>`;
                 if (this.ram.own) {
                     document.getElementById("ram-clicker").classList.add("cursor-pointer");
@@ -482,7 +483,7 @@ class RamPage {
 
     connectWs() {
         let apiUrl = new URL(API_URL);
-        apiUrl.protocol = "ws";
+        apiUrl.protocol = WS_PROTOCOL;
         this.websocket = new WebSocket(`${apiUrl}/users/${user.username}/rams/${this.ram.id}/ws/clicker`);
         this.websocket.onopen = this._onopen.bind(this);
         this.websocket.onmessage = this._onmessage.bind(this);
