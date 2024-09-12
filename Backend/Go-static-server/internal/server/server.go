@@ -15,9 +15,8 @@ import (
 )
 
 type TemplateData struct {
-	Title         string
-	ApiUrl        string
-	DefaultAvatar string
+	Title string
+	config.BaseTemplateData
 }
 
 type ErrorTemplateData struct {
@@ -37,7 +36,7 @@ func NewStaticServer(ctx context.Context, Addr string) *http.Server {
 
 	router.HandleFunc("/favicon.ico", faviconHandler)
 
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(config.Conf.CdnFilesPath))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(config.Conf.Paths.CdnFiles))))
 
 	slog.Info("Creating static server", slog.String("addr", Addr))
 	return &http.Server{
@@ -59,13 +58,13 @@ func ServeServer(ctx context.Context, server *http.Server) error {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "index.html"))
+	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "base.html"), fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "index.html"))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
+	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("Ram Generator"), BaseTemplateData: config.Conf.BaseTemplateData})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -73,14 +72,14 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "user.html"))
+	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "base.html"), fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "user.html"))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	vars := mux.Vars(r)
-	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("%s - Ram Generator", vars["username"]), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
+	err = ts.Execute(w, TemplateData{Title: fmt.Sprintf("%s - Ram Generator", vars["username"]), BaseTemplateData: config.Conf.BaseTemplateData})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -88,13 +87,13 @@ func User(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "login.html"))
+	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "base.html"), fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "login.html"))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{Title: "Ram Generator", ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar})
+	err = ts.Execute(w, TemplateData{Title: "Ram Generator", BaseTemplateData: config.Conf.BaseTemplateData})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -102,13 +101,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func ErrorPage404(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "base.html"), fmt.Sprintf("%s/%s", config.Conf.TemplatesPath, "error.html"))
+	ts, err := template.ParseFiles(fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "base.html"), fmt.Sprintf("%s/%s", config.Conf.Paths.Templates, "error.html"))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	err = ts.Execute(w, ErrorTemplateData{ErrorText: "Такой страницы не существует", TemplateData: TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), ApiUrl: config.Conf.ApiUrl, DefaultAvatar: config.Conf.DefaultAvatar}})
+	err = ts.Execute(w, ErrorTemplateData{ErrorText: "Такой страницы не существует", TemplateData: TemplateData{Title: fmt.Sprintf("404 - Ram Generator"), BaseTemplateData: config.Conf.BaseTemplateData}})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -116,7 +115,7 @@ func ErrorPage404(w http.ResponseWriter, r *http.Request) {
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	file, err := os.Open(config.Conf.FaviconPath)
+	file, err := os.Open(config.Conf.Paths.Favicon)
 	if err != nil {
 		http.Error(w, "FaviconPath not found", http.StatusNotFound)
 		return
@@ -133,5 +132,5 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/x-icon")
 	w.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
 
-	http.ServeContent(w, r, config.Conf.FaviconPath, fileInfo.ModTime(), file)
+	http.ServeContent(w, r, config.Conf.Paths.Favicon, fileInfo.ModTime(), file)
 }
