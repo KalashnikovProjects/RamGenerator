@@ -11,20 +11,29 @@ import (
 
 var Conf *Config
 
-type Config struct {
-	ApiUrl        string
-	Port          int
-	DefaultAvatar string
+type BaseTemplateData struct {
+	ApiUrl            string
+	WebsocketProtocol string
+	DefaultAvatar     string
+}
 
-	RootPath      string
-	TemplatesPath string
-	CdnFilesPath  string
-	FaviconPath   string
+type Paths struct {
+	Root      string
+	Templates string
+	CdnFiles  string
+	Favicon   string
+}
+
+type Config struct {
+	Port int
+	BaseTemplateData
+	Paths
 }
 
 type yamlConfigData struct {
 	Frontend struct {
-		ApiUrl string `yaml:"api_url"`
+		ApiUrl            string `yaml:"api_url"`
+		WebsocketProtocol string `yaml:"websocket_protocol"`
 	} `yaml:"frontend"`
 	Ports struct {
 		GoStaticServer int `yaml:"go_static_server"`
@@ -51,13 +60,18 @@ func InitConfigs() {
 		os.Exit(1)
 	}
 	Conf = &Config{
-		ApiUrl:        configData.Frontend.ApiUrl,
-		Port:          configData.Ports.GoStaticServer,
-		DefaultAvatar: configData.Users.DefaultAvatar,
-		RootPath:      rootPath,
-		TemplatesPath: fmt.Sprintf("%s/Frontend/templates", rootPath),
-		CdnFilesPath:  fmt.Sprintf("%s/Frontend/static", rootPath),
-		FaviconPath:   fmt.Sprintf("%s/Frontend/static/img/icon196.ico", rootPath),
+		Port: configData.Ports.GoStaticServer,
+		BaseTemplateData: BaseTemplateData{
+			ApiUrl:            configData.Frontend.ApiUrl,
+			WebsocketProtocol: configData.Frontend.WebsocketProtocol,
+			DefaultAvatar:     configData.Users.DefaultAvatar,
+		},
+		Paths: Paths{
+			Root:      rootPath,
+			Templates: fmt.Sprintf("%s/Frontend/templates", rootPath),
+			CdnFiles:  fmt.Sprintf("%s/Frontend/static", rootPath),
+			Favicon:   fmt.Sprintf("%s/Frontend/static/img/icon196.ico", rootPath),
+		},
 	}
 }
 
