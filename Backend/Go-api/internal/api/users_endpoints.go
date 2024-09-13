@@ -91,7 +91,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 			return
 		}
-		if user.Id != dbRam.UserId {
+		if dbUser.Id != dbRam.UserId {
 			http.Error(w, fmt.Sprintf("it's not your ram"), http.StatusForbidden)
 			return
 		}
