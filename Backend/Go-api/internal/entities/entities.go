@@ -22,7 +22,7 @@ type User struct {
 	ClickersBlockedUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
 
 	AvatarRamId int  `json:"avatar_ram_id"`
-	AvatarBox   *Box `json:"avatar_box"`
+	AvatarBox   *Box `json:"avatar_box"` // 4 координаты, обрезающие аватар, координаты от 0 до 1
 }
 
 func (u *User) CalculateRamsGeneratedLastDay(timeBetweenDaily int) int {
