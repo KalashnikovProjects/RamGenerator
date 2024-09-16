@@ -1,6 +1,9 @@
 {{ define "content" }}
     <link href="static/styles/user.css" rel="stylesheet" crossorigin="anonymous">
     <script src="static/js/user.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.2/konva.min.js"></script>
+    <script defer src="static/js/user-avatar.js"></script>
+
 
     <div id="generate-ram" class="user-popup">
         <div class="popup-menu"></div>
@@ -11,7 +14,7 @@
             <div>
                 <form id="changeUsernameForm">
                     <label for="settings-username" class="settings-label">Новое имя пользователя: </label>
-                    <input class="settings-input" id="settings-username" type="text" name="" placeholder="" autocomplete="username" maxlength="24">
+                    <input class="settings-input" id="settings-username" type="text" name="username" placeholder="" autocomplete="username" maxlength="24">
                     <script>document.getElementById("settings-username").placeholder = userInfoUsername</script>
                     <br>
                     <div id="username-message"></div>
@@ -23,6 +26,12 @@
                 </form>
                 <hr class="settings-hr">
                 <form id="changePasswordForm">
+                    <input class="d-none" id="settings-hidden-username" type="text" autocomplete="username" name="username" maxlength="24">
+                    <script>
+                        if (user) {
+                            document.getElementById("settings-hidden-username").value = user.username
+                        }
+                    </script>
                     <label for="settings-password" class="settings-label"> Новый пароль: </label>
                     <input class="settings-input" id="settings-password" type="password" autocomplete="new-password" name="new-password">
                     <br>
@@ -38,6 +47,11 @@
                 </form>
                 <script>bindSettingsForms()</script>
             </div>
+            <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
         </div>
     </div>
     <div id="ram" class="user-popup">

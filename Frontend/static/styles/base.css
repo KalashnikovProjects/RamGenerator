@@ -19,6 +19,9 @@ body {
 }
 
 .user-avatar {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
     margin-right: 0.4rem;
     border-radius: 0.5rem;
 }

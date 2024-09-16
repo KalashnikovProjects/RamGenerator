@@ -24,7 +24,7 @@
     border-radius: 1.5rem;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1399px) {
     .popup-menu {
         top: 10vh;
         height: 90vh;
@@ -135,8 +135,12 @@
 }
 
 .user-card-avatar {
-    height: 0;
+    margin-left: 10%;
+    margin-top: 10%;
+    width: 80%;
+    aspect-ratio: 1;
     background-repeat: no-repeat;
+    overflow: hidden;
     display: inline-block;
     border-radius: 0.4rem;
 }
@@ -155,7 +159,6 @@
         margin-left: 10%;
         margin-top: 10%;
         width: 80%;
-        padding-bottom: 80%;
     }
 
     .user-card-username {
@@ -203,7 +206,6 @@
     .user-card-avatar {
         margin-left: 5%;
         width: 30%;
-        padding-bottom: 30%;
     }
 
     .user-card-username {
@@ -246,10 +248,42 @@
     width: 80%;
 }
 
+.ram-content {
+    display: table;
+    margin: 0 auto;
+}
+
+.ram-description {
+    max-width: 75%;
+    align-self: center;
+    text-align: center;
+}
+
 .ram-image {
-    max-width: 80%;
-    width: 80%;
+    width: 300px;
+    height: auto;
     border-radius: 0.5rem;
+}
+
+@media (min-width: 600px) and (max-width: 1399px) {
+    .ram-image {
+        width: 400px;
+        height: auto;
+    }
+}
+
+@media (min-width: 1500px) {
+    .ram-image {
+        width: 350px;
+        height: auto;
+    }
+}
+
+@media (max-width: 360px) {
+    .ram-image {
+        width: 150px;
+        height: auto;
+    }
 }
 
 .cursor-pointer {
@@ -259,18 +293,6 @@
 @media (min-width: 600px) {
     .tap-generate-img {
         height: 50%;
-        width: auto;
-    }
-
-    .ram-image {
-        height: 45%;
-        width: auto;
-    }
-}
-
-@media (min-width: 1400px) {
-    .ram-image {
-        height: 70%;
         width: auto;
     }
 }
@@ -302,4 +324,29 @@
     font-weight: 400;
     margin-top: 10px;
     margin-bottom: 10px;
+}
+
+.up-button {
+    top: 1.5rem;
+    position: absolute;
+    background: none;
+    border: none;
+}
+
+.up-button img,svg {
+    width: 28px;
+    height: 28px;
+}
+
+@media (max-width: 599px) {
+    .up-button img,svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.ram-canvas {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
 }
