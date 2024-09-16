@@ -2,12 +2,11 @@
 
 let user;
 
-function sleep (time) {
+function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 if ('serviceWorker' in navigator) {
-    // Весь код регистрации у нас асинхронный.
     navigator.serviceWorker.register('/static/js/sw.js')
         .then(() => navigator.serviceWorker.ready.then((worker) => {
             worker.sync.register('syncdata');
@@ -19,7 +18,7 @@ async function loadAvatar(username, ramId) {
     if (ramId === 0) {
         return DEFAULT_AVATAR
     }
-    const response = await fetch(`${API_URL}/users/${username}/${ramId}`, {
+    const response = await fetch(`${API_URL}/users/${username}/rams/${ramId}`, {
         mode: 'cors',
         method: 'GET',
     });
@@ -97,14 +96,15 @@ async function displayUser() {
     }
 
     const [[x1, y1], [x2, y2]] = user.avatar_box;
-    const size = Math.abs(y1 - y2)
+    const size = Math.abs(x1 - x2)
+    console.log(user.avatar_box)
     const style =  `
     width: 1.5rem;
     height: 1.5rem;
     background-repeat: no-repeat;
     display: inline-block;
     background-size: ${100 / size}%;
-    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
+    background-position: ${(Math.min(x1, x2) + size / 2) * 100}% ${(Math.min(y1, y2) + size / 2) * 100}%;
     background-image: url(${user.avatar_url});
     `
     document.getElementById("user-box").innerHTML = `

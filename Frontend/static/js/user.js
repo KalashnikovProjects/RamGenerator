@@ -64,14 +64,16 @@ async function displayUserInfo() {
     }
     const [[x1, y1], [x2, y2]] = userInfo.avatar_box;
     const size = Math.abs(y1 - y2);
+    // scale: ${1 / size};
+    //     clip-path: xywh(${Math.min(x1, x2) * 100}% ${Math.min(y1, y2) * 100}% ${Math.abs(x1 - x2) * 100}% ${Math.abs(y1 - y2) * 100}%);
     let imageStyle =  `
     background-size: ${100 / size}%;
-    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
+    background-position: ${((Math.min(x1, x2) + Math.abs(x1 - x2) / 2)) * 100}% ${((Math.min(y1, y2) + Math.abs(y1 - y2) / 2)) * 100}%;
     background-image: url(${userInfo.avatar_url});`;
     let imageOnclick = "";
     if (userInfo.avatar_ram_id !== 0) {
         imageStyle += "cursor: pointer;";
-        imageOnclick = `onclick="location.hash='#ram-${userInfo.avatar_ram_id}'"`;
+        imageOnclick = `onclick="openRam(${userInfo.avatar_ram_id})"`;
     }
     let res = `
     <div class="user-card-avatar" ${imageOnclick} style="${imageStyle}"></div>
@@ -193,8 +195,12 @@ class Clicker {
     }
 
     close() {
-        this.sendClicks(true);
-        clearInterval(this.sendClicksInterval);
+        try {
+            this.sendClicks(true);
+        } catch (e) {}
+        if (this.sendClicksInterval) {
+            clearInterval(this.sendClicksInterval);
+        }
         try {
             document.getElementById(this.clickElemId).removeEventListener("pointerup", this.onclickBinded);
         } catch (e) {}
@@ -234,7 +240,12 @@ class Generator {
 
         document.querySelector("#generate-ram .popup-menu").innerHTML = `
              <h4 id="generation-title" class="text-center">Генерация барана</h2>
-             <div id="generation-content" class="text-center"></div>`
+             <div id="generation-content" class="text-center"></div>
+             <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>`
         this.connectWs();
     }
 
@@ -318,17 +329,20 @@ class Generator {
 
     close() {
         if (this.websocket.readyState !== WebSocket.CLOSED) {
-            if (this.targetedClicker) {
-                this.targetedClicker.close();
-            }
-            this.websocket.close();
+            try {
+                if (this.targetedClicker) {
+                    this.targetedClicker.close();
+                }
+                this.websocket.close();
+            } catch (e) {}
         }
 
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
         }
-
-        document.getElementById("generation-content").innerHTML = ``;
+        try {
+            document.getElementById("generation-content").innerHTML = ``;
+        } catch (e) {}
         ramGenerator = undefined;
     }
 
@@ -455,14 +469,24 @@ class RamPage {
         getRam(userInfoUsername, id).then(
             ram => {
                 this.ram = ram;
-                document.querySelector("#ram .popup-menu").innerHTML = `
-             <h4 id="ram-description" class="text-center">${this.ram.description}</h2>
-             <div id="ram-content" class="text-center">
+                let elem =  document.querySelector("#ram .popup-menu");
+                elem.innerHTML = `
+             <h4 id="ram-description" class="ram-description">${this.ram.description}</h2>
+             <div id="ram-content" class="text-center ram-content">
                 <img id="ram-clicker" class="ram-image mt-5" src="${this.ram.image_url}" alt="ram">
                 <div id="taps-line" class="mt-3"><h3 id="ram-clicked">${this.ram.taps} тапов</h3></div>
-             </div>`;
+             </div>
+             <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
+            `;
                 if (this.ram.own) {
                     document.getElementById("ram-clicker").classList.add("cursor-pointer");
+                    elem.innerHTML += `<button id="avatar-button" style="left:1.5rem" class="up-button" onclick="toggleCropMode()">
+                                            <img src="/static/img/avatar-button.svg" alt="На аватар">
+                                        </button>`;
                     this.clicker = new Clicker(
                         "ram-clicker",
                         function (value) { document.getElementById("ram-clicked").innerHTML = `${value} тапов`},
@@ -534,18 +558,23 @@ class RamPage {
         }
     }
 
-    close() {
+    close(destroy=true) {
         if (this.ram && this.ram.own) {
-            if (this.websocket.readyState !== WebSocket.CLOSED) {
-                if (this.clicker) {
-                    this.clicker.close();
+            try {
+                if (this.websocket.readyState !== WebSocket.CLOSED) {
+                    if (this.clicker) {
+                        this.clicker.close();
+                    }
+                    this.websocket.close();
                 }
-                this.websocket.close();
-            }
+            } catch (e) {}
         }
-
+        if (destroy) {
+            try {
+                document.querySelector("#ram .popup-menu").innerHTML = ``
+            } catch (e) {}
+        }
         ramPage = undefined;
-        document.querySelector("#ram .popup-menu").innerHTML = ``;
     }
 
     sendClicks(value) {
@@ -677,7 +706,6 @@ function changeUsername(event) {
 function changePassword(event) {
     event.preventDefault();
     const el = document.getElementById('password-message')
-
     const password = document.getElementById('settings-password').value;
     const passwordRepeat = document.getElementById('settings-password-repeat').value;
     const err = validatePassword(password, passwordRepeat);
@@ -737,14 +765,26 @@ async function checkHash() {
     }
 }
 
+async function closeCanvas() {
+    stage.destroy();
+    stage = null;
+    isCanvasMode = false;
+    document.querySelector("#ram .popup-menu").innerHTML = ``
+}
 
 function closePopup() {
-    if (ramGenerator) {
-        ramGenerator.close();
-    }
-    if (ramPage) {
-        ramPage.close();
-    }
+    try {
+        if (ramGenerator) {
+            ramGenerator.close();
+        }
+        if (ramPage) {
+            ramPage.close();
+        }
+        if (isCanvasMode) {
+            closeCanvas()
+        }
+    } catch (e) {}
+
     location.hash = "";
 
     const url = new URL(location);
