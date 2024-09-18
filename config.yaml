@@ -52,7 +52,3 @@ image:
 websocket:
   ping_period: 3
   pong_wait:   5
-
-frontend:
-  websocket_protocol: "ws"
-  api_url: "http://localhost:8082/api"

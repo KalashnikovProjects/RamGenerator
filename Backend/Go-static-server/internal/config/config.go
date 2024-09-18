@@ -31,10 +31,6 @@ type Config struct {
 }
 
 type yamlConfigData struct {
-	Frontend struct {
-		ApiUrl            string `yaml:"api_url"`
-		WebsocketProtocol string `yaml:"websocket_protocol"`
-	} `yaml:"frontend"`
 	Ports struct {
 		GoStaticServer int `yaml:"go_static_server"`
 	} `yaml:"ports"`
@@ -62,8 +58,8 @@ func InitConfigs() {
 	Conf = &Config{
 		Port: configData.Ports.GoStaticServer,
 		BaseTemplateData: BaseTemplateData{
-			ApiUrl:            configData.Frontend.ApiUrl,
-			WebsocketProtocol: configData.Frontend.WebsocketProtocol,
+			ApiUrl:            getEnv("API_URL", "http://localhost:8082/api"),
+			WebsocketProtocol: getEnv("WEBSOCKET_PROTOCOL", "ws"),
 			DefaultAvatar:     configData.Users.DefaultAvatar,
 		},
 		Paths: Paths{
