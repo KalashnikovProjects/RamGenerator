@@ -232,21 +232,27 @@ class Generator {
     }
 
     async initialize() {
+        document.querySelector("#generate-ram .popup-menu").innerHTML = `
+             <h4 id="generation-title" class="text-center">Генерация барана</h2>
+             <div id="generation-content" class="text-center">
+                <div id="ram-content" class="text-center ram-content">
+                    <img id="loading-image" src="/static/img/icon512.png" class="d-none rotating-image img-fluid wait-ram" alt="Загрузка..." style="cursor: pointer">
+                </div>
+            </div>
+             <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>`
+        document.getElementById("loading-image").classList.add("loading-image")
+
+
         while (loadingUserInfo) {
             await sleep(5);
         }
         if (!userInfo.own) {
             location.hash = "";
         }
-
-        document.querySelector("#generate-ram .popup-menu").innerHTML = `
-             <h4 id="generation-title" class="text-center">Генерация барана</h2>
-             <div id="generation-content" class="text-center"></div>
-             <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                </svg>
-            </button>`
         this.connectWs();
     }
 
@@ -351,7 +357,7 @@ class Generator {
     }
 
     close() {
-        if (this.websocket.readyState !== WebSocket.CLOSED) {
+        if (this.websocket.readyState === WebSocket.OPEN) {
             try {
                 if (this.targetedClicker) {
                     this.targetedClicker.close();
@@ -489,6 +495,19 @@ async function getRam(username, id) {
 
 class RamPage {
     constructor(id) {
+        let elem =  document.querySelector("#ram .popup-menu");
+        elem.innerHTML = `
+             <h4 id="ram-description" class="ram-description">Загрузка барана...</h2>
+             <div id="ram-content" class="text-center ram-content">
+                 <img id="loading-image" src="/static/img/icon512.png" class="d-none rotating-image img-fluid wait-ram" alt="" style="cursor: pointer">
+             </div>
+             <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
+            `;
+        document.getElementById("loading-image").classList.add("loading-image")
         getRam(userInfoUsername, id).then(
             ram => {
                 this.ram = ram;
