@@ -96,15 +96,18 @@ async function displayUser() {
     }
 
     const [[x1, y1], [x2, y2]] = user.avatar_box;
-    const size = Math.abs(x1 - x2)
-    console.log(user.avatar_box)
+    const size = Math.abs(y1 - y2);
+    const moveSize = 1 - size;
+    const posX = Math.min(x1, x2) / moveSize;
+    const posY = Math.min(y1, y2) / moveSize;
+
     const style =  `
     width: 1.5rem;
     height: 1.5rem;
     background-repeat: no-repeat;
     display: inline-block;
     background-size: ${100 / size}%;
-    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
+    background-position: ${posX * 100}% ${posY * 100}%;
     background-image: url(${user.avatar_url});
     `
     document.getElementById("user-box").innerHTML = `
