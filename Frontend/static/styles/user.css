@@ -253,6 +253,11 @@
     margin: 0 auto;
 }
 
+.loading-image {
+    display: unset;
+    animation: showBlock 0.3s linear forwards;
+}
+
 .ram-description {
     max-width: 75%;
     align-self: center;
