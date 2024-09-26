@@ -254,8 +254,14 @@
 }
 
 .loading-image {
-    display: unset;
-    animation: showBlock 0.3s linear forwards;
+    opacity: 0;
+    transition: opacity 1s linear, visibility 1s linear;
+    margin-top: 20%;
+    align-self: center;
+}
+
+.loading-image-visible {
+    opacity: 1!important;
 }
 
 .ram-description {

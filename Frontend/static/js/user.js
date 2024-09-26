@@ -127,7 +127,13 @@ async function displayUserRams() {
 }
 
 function appendRam(ram) {
-    document.getElementById("rams-list").innerHTML += createRamElem(ram);
+    let el = document.getElementById("rams-list");
+    let elem = createRamElem(ram);
+    if (!el) {
+        document.getElementById("rams").innerHTML = `<div id="rams-list" class="rams-list row row-cols-auto g-3 d-flex justify-content-start">${elem}</div>`;
+    } else {
+        el.innerHTML += elem
+    }
 }
 
 function countdown(target, elementId, callback) {
@@ -235,18 +241,14 @@ class Generator {
         document.querySelector("#generate-ram .popup-menu").innerHTML = `
              <h4 id="generation-title" class="text-center">Генерация барана</h2>
              <div id="generation-content" class="text-center">
-                <div id="ram-content" class="text-center ram-content">
-                    <img id="loading-image" src="/static/img/icon512.png" class="d-none rotating-image img-fluid wait-ram" alt="Загрузка..." style="cursor: pointer">
-                </div>
+                <img id="loading-image-generator" src="/static/img/icon512.png" class="loading-image rotating-image img-fluid wait-ram" alt="Загрузка..." style="cursor: pointer">
             </div>
              <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
                  <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                 </svg>
             </button>`
-        document.getElementById("loading-image").classList.add("loading-image")
-
-
+        setTimeout(() => document.getElementById("loading-image-generator").classList.add("loading-image-visible"), 10)
         while (loadingUserInfo) {
             await sleep(5);
         }
@@ -291,12 +293,12 @@ class Generator {
             case 429:
                 if (data.error.startsWith("you can generate only")) {
                     error = `Вы уже сгенерировали всех баранов на сегодня. Следующий раз вы сможете через <br><h1 id='error-countdown'></h1>`;
-                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);ramGenerator = new Generator();});
+                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);this.close();ramGenerator = new Generator();});
                     setTimeout(cd, 10);
                     this.countdownInterval = setInterval(cd, 1000);
                 } else {
                     error = `Нельзя так часто генерировать баранов! Вы сможете сгенерировать следующего барана через <br><h1 id='error-countdown'></h1>`;
-                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);ramGenerator = new Generator();});
+                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);this.close();ramGenerator = new Generator();});
                     setTimeout(cd, 10);
                     this.countdownInterval = setInterval(cd, 1000);
                 }
@@ -304,7 +306,9 @@ class Generator {
             case 400:
                 switch (data.error) {
                     case "invalid clicks":
-                        this.targetedClicker.rollbackErrorClicks();
+                        try {
+                            this.targetedClicker.rollbackErrorClicks();
+                        } catch (e) {}
                         // TODO сообщение об ошибке
                         break;
                     case "user prompt or rams descriptions contains illegal content":
@@ -345,7 +349,7 @@ class Generator {
                 error = `Произошла неизвестная ошибка`;
                 break;
         }
-        if (error) {
+        if (error && !this.preventError) {
             const content = document.getElementById("generation-content");
             content.innerHTML = `
                 <div class="text-center popup-error" style="position: relative;top: 30%">
@@ -357,7 +361,8 @@ class Generator {
     }
 
     close() {
-        if (this.websocket.readyState === WebSocket.OPEN) {
+        this.preventError = true
+        if (this.websocket.readyState !== WebSocket.CLOSED) {
             try {
                 if (this.targetedClicker) {
                     this.targetedClicker.close();
@@ -403,7 +408,7 @@ class Generator {
         if (data.id) {
             this.close();
             // TODO анимация завершения
-            appendRam(data)
+            appendRam(data);
             openRam(data.id);
             return
         }
@@ -448,7 +453,6 @@ class Generator {
                 break;
             case "success clicked":
                 if (this.imageGenerated) {
-                    // TODO анимация завершения
                 } else {
                     content.innerHTML = `
                     <h4 class="text-center" style="margin-top: 20%">Вы очень быстро тапали!</h4>
@@ -470,12 +474,14 @@ class Generator {
     _onclose(event) {}
 
     _onerror(error) {
-        const content = document.getElementById("generation-content");
-        content.innerHTML = `
+        if (!this.preventError) {
+            const content = document.getElementById("generation-content");
+            content.innerHTML = `
                 <div class="text-center popup-error" style="margin-top: 40%">
                     <h4>Не удалось подключиться к серверу.</h4>
                     <a class="tap-text" style="font-size: 1rem" onclick="closePopup()">ОК</a>
                 </div>`;
+        }
     };
 }
 
@@ -498,16 +504,14 @@ class RamPage {
         let elem =  document.querySelector("#ram .popup-menu");
         elem.innerHTML = `
              <h4 id="ram-description" class="ram-description">Загрузка барана...</h2>
-             <div id="ram-content" class="text-center ram-content">
-                 <img id="loading-image" src="/static/img/icon512.png" class="d-none rotating-image img-fluid wait-ram" alt="" style="cursor: pointer">
-             </div>
+             <img id="loading-image-ram-page" src="/static/img/icon512.png" class="loading-image rotating-image img-fluid wait-ram" alt="Загрузка..." style="cursor: pointer">
              <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
                  <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                 </svg>
             </button>
             `;
-        document.getElementById("loading-image").classList.add("loading-image")
+        setTimeout(() => document.getElementById("loading-image-ram-page").classList.add("loading-image-visible"), 10)
         getRam(userInfoUsername, id).then(
             ram => {
                 this.ram = ram;
@@ -574,7 +578,9 @@ class RamPage {
             case 400:
                 switch (data.error) {
                     case "invalid clicks":
-                        this.targetedClicker.rollbackErrorClicks();
+                        try {
+                            this.targetedClicker.rollbackErrorClicks();
+                        } catch (e) {}
                         // TODO сообщение об ошибке
                         break;
                     default:
@@ -589,7 +595,7 @@ class RamPage {
                 error = `Неизвестная ошибка ${data.code} ${data.error}`;
                 break;
         }
-        if (error) {
+        if (error && !this.preventError) {
             const content = document.getElementById("ram-content");
             content.innerHTML = `
                 <div class="text-center popup-error" style="position: relative;top: 30%">
@@ -601,14 +607,13 @@ class RamPage {
     }
 
     close(destroy=true) {
-        if (this.ram && this.ram.own) {
+        this.preventError = true
+        if (this.websocket.readyState !== WebSocket.CLOSED) {
             try {
-                if (this.websocket.readyState !== WebSocket.CLOSED) {
-                    if (this.clicker) {
-                        this.clicker.close();
-                    }
-                    this.websocket.close();
+                if (this.clicker) {
+                    this.clicker.close();
                 }
+                this.websocket.close();
             } catch (e) {}
         }
         if (destroy) {
@@ -639,13 +644,15 @@ class RamPage {
     _onclose(event) {}
 
     _onerror(error) {
-        const content = document.getElementById("ram-content");
-        content.innerHTML = `
+        if (!this.preventError) {
+            const content = document.getElementById("ram-content");
+            content.innerHTML = `
                 <div class="text-center popup-error" style="margin-top: 40%">
                     <h4>Не удалось подключиться к серверу.</h4>
                     <a class="tap-text" style="font-size: 1rem" onclick="closePopup()">ОК</a>
                 </div>`;
-    };
+        }
+    }
 }
 
 async function openRam(id) {
