@@ -450,6 +450,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 				WebsocketSendJSON(ctx, ws, wsError{"image generation timeout", 500})
 				return
 			}
+			if errors.Is(err, ram_image_generator.ImageGenerationUnavailable) {
+				slog.Error("image generation service unavailable", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
+				WebsocketSendJSON(ctx, ws, wsError{"image generation service unavailable", 500})
+				return
+			}
+			if errors.Is(err, ram_image_generator.CensorshipError) {
+				WebsocketSendJSON(ctx, ws, wsError{"user prompt or rams descriptions contains illegal content", 400})
+				return
+			}
 			slog.Error("image generating error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "ram_image_generator.GenerateRamImage"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"image generating error", 500})
 			return

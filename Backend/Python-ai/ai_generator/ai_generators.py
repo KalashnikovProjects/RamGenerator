@@ -13,10 +13,14 @@ import requests
 class GeminiCensorshipError(Exception):
     pass
 
-
 class GeminiBugError(Exception):
     pass
 
+class ImageCensorshipError(Exception):
+    pass
+
+class ImageGenerationUnavailableError(Exception):
+    pass
 
 class PromptGenerator:
     def __init__(self, api_key: str,
@@ -86,12 +90,16 @@ class ImageGenerator:
         data = response.json()
         return data['uuid']
 
-    def check_generation(self, request_id, attempts=10, delay=10):
+    def check_generation(self, request_id, attempts=20, delay=10):
         for attempt in range(attempts):
             response = requests.get(self.URL + 'key/api/v1/text2image/status/' + request_id, headers=self.AUTH_HEADERS)
             data = response.json()
             if data['status'] == 'DONE':
                 return data['images'][0]
-
+            if data["censored"] == "FAIL":
+                if data["censored"]:
+                    raise ImageCensorshipError
+                else:
+                    raise ImageGenerationUnavailableError
             time.sleep(delay)
         raise ImageGenerationTimeoutError(f'Image generation failed after {attempts} attempts')
