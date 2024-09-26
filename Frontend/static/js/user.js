@@ -64,11 +64,12 @@ async function displayUserInfo() {
     }
     const [[x1, y1], [x2, y2]] = userInfo.avatar_box;
     const size = Math.abs(y1 - y2);
-    // scale: ${1 / size};
-    //     clip-path: xywh(${Math.min(x1, x2) * 100}% ${Math.min(y1, y2) * 100}% ${Math.abs(x1 - x2) * 100}% ${Math.abs(y1 - y2) * 100}%);
+    const moveSize = 1 - size;
+    const posX = Math.min(x1, x2) / moveSize;
+    const posY = Math.min(y1, y2) / moveSize;
     let imageStyle =  `
     background-size: ${100 / size}%;
-    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
+    background-position: ${posX * 100}% ${posY * 100}%;
     background-image: url(${userInfo.avatar_url});`;
     let imageOnclick = "";
     if (userInfo.avatar_ram_id !== 0) {
