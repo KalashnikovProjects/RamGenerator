@@ -68,13 +68,14 @@ async function displayUserInfo() {
     //     clip-path: xywh(${Math.min(x1, x2) * 100}% ${Math.min(y1, y2) * 100}% ${Math.abs(x1 - x2) * 100}% ${Math.abs(y1 - y2) * 100}%);
     let imageStyle =  `
     background-size: ${100 / size}%;
-    background-position: ${((Math.min(x1, x2) + Math.abs(x1 - x2) / 2)) * 100}% ${((Math.min(y1, y2) + Math.abs(y1 - y2) / 2)) * 100}%;
+    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
     background-image: url(${userInfo.avatar_url});`;
     let imageOnclick = "";
     if (userInfo.avatar_ram_id !== 0) {
         imageStyle += "cursor: pointer;";
         imageOnclick = `onclick="openRam(${userInfo.avatar_ram_id})"`;
     }
+
     let res = `
     <div class="user-card-avatar" ${imageOnclick} style="${imageStyle}"></div>
     <h3 class="user-card-username">${userInfo.username}</h3>`;
@@ -300,6 +301,9 @@ class Generator {
                         this.targetedClicker.rollbackErrorClicks();
                         // TODO сообщение об ошибке
                         break;
+                    case "user prompt or rams descriptions contains illegal content":
+                        error = `Не получилось сгенерировать барана по такому запросу, попробуйте ещё раз`;
+                        break;
                     default:
                         console.log("Unknown error", data.code, data.error);
                         error = `Unknown error ${data.code} ${data.error}`;
@@ -307,8 +311,27 @@ class Generator {
                 }
                 break;
             case 500:
-                error = "Произошла неизвестная ошибка на стороне сервера.";
-                // TODO подробнее про ошибки 500
+                switch (data.error) {
+                    case "read message error":
+                    case "send message error":
+                        break;
+                    case "image generation timeout":
+                        error = `Сервис генерации изображений баранов не отвечает, попробуйте позже`;
+                        break;
+                    case "image generating error":
+                    case "image generation service unavailable":
+                        error = `Сервис генерации изображений баранов сейчас недоступен, попробуйте позже`;
+                        break;
+                    case "image description generating error":
+                    case "image uploading error":
+                    case "prompt generating error":
+                        error = `Сервис, необходимый для генерации баранов сейчас недоступен, попробуйте позже`;
+                        break;
+                    default:
+                        error = "Произошла неизвестная ошибка на стороне сервера.";
+                        console.log("Unknown internal server error", data.code, data.error);
+                        break;
+                }
                 break
             //TODO при других ошибках либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз или без)
             default:

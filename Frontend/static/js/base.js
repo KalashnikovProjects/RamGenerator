@@ -104,7 +104,7 @@ async function displayUser() {
     background-repeat: no-repeat;
     display: inline-block;
     background-size: ${100 / size}%;
-    background-position: ${(Math.min(x1, x2) + size / 2) * 100}% ${(Math.min(y1, y2) + size / 2) * 100}%;
+    background-position: ${(Math.min(y1, y2) + size / 2) * 100}% ${(Math.min(x1, x2) + size / 2) * 100}%;
     background-image: url(${user.avatar_url});
     `
     document.getElementById("user-box").innerHTML = `

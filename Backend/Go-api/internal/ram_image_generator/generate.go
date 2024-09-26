@@ -21,9 +21,10 @@ import (
 )
 
 var (
-	ImageGenerationTimeout = errors.New("image generation timeout")
-	TooLongPromptError     = errors.New("too long prompt error")
-	CensorshipError        = errors.New("user prompt or descriptions contains illegal content")
+	ImageGenerationTimeout     = errors.New("image generation timeout")
+	ImageGenerationUnavailable = errors.New("image generation unavailable")
+	TooLongPromptError         = errors.New("too long prompt error")
+	CensorshipError            = errors.New("user prompt or descriptions contains illegal content")
 )
 
 type imageUploadApiResponseImage struct {
@@ -108,6 +109,14 @@ func GenerateRamImage(context context.Context, grpcClient pb.RamGeneratorClient,
 		slog.Error("generate ram image grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
 		if ok && st.Code() == codes.DeadlineExceeded {
 			return "", ImageGenerationTimeout
+		}
+		if ok && st.Code() == codes.InvalidArgument {
+			return "", CensorshipError
+		}
+		if ok && st.Code() == codes.Internal {
+			if st.String() == "Image generation service unavailable" {
+				return "", ImageGenerationUnavailable
+			}
 		}
 		return "", err
 	}

@@ -83,6 +83,10 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         try:
             image = api.check_generation(uuid)
             return ram_generator_pb2.RamImage(image=image)
+        except ai_generators.ImageCensorshipError:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"User prompt contains illegal content")
+        except ai_generators.ImageGenerationUnavailableError:
+            context.abort(grpc.StatusCode.INTERNAL, f"Image generation service unavailable")
         except ai_generators.ImageGenerationTimeoutError:
             context.abort(grpc.StatusCode.DEADLINE_EXCEEDED, f"The waiting time for image generation has been exceeded")
         except Exception as e:
