@@ -6,6 +6,27 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func GetTopRams(ctx context.Context, db SQLQueryExec, top int) ([]entities.Ram, error) {
+	query := `SELECT id, taps, description, image_url, user_id FROM rams
+    								 ORDER BY taps DESC
+    								 LIMIT $1`
+	rows, err := db.QueryContext(ctx, query, top)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]entities.Ram, 0)
+	defer rows.Close()
+	for rows.Next() {
+		ram := entities.Ram{}
+		err := rows.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId)
+		if err != nil {
+			return []entities.Ram{}, err
+		}
+		res = append(res, ram)
+	}
+	return res, nil
+}
+
 func GetRamContext(ctx context.Context, db SQLQueryExec, id int) (entities.Ram, error) {
 	query := `SELECT id, taps, description, image_url, user_id FROM rams 
                                            WHERE id=$1`

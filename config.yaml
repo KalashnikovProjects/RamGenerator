@@ -52,3 +52,6 @@ image:
 websocket:
   ping_period: 3
   pong_wait:   5
+
+another:
+  top_rams_count: 5

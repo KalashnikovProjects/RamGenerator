@@ -25,6 +25,8 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 	router.Handle("/api/login", http.HandlerFunc(handlers.Login)).Methods("GET", "POST")
 	router.Handle("/api/me", AuthorizationMiddleware(http.HandlerFunc(handlers.Me))).Methods("GET", "POST")
 
+	router.Handle("/api/top-rams", http.HandlerFunc(handlers.GetTopRams)).Methods("GET")
+
 	router.Handle("/api/users/{username}", http.HandlerFunc(handlers.GetUser)).Methods("GET")
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.PutPatchUser))).Methods("PUT", "PATCH")
 	router.Handle("/api/users/{username}", AuthorizationMiddleware(http.HandlerFunc(handlers.DeleteUser))).Methods("DELETE")

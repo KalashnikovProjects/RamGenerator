@@ -64,6 +64,10 @@ type WebsocketConfig struct {
 	PongWait   int `yaml:"pong_wait"`
 }
 
+type AnotherConfig struct {
+	TopRamsCount int `yaml:"top_rams_count"`
+}
+
 type SettingsConfig struct {
 	Ports      PortsConfig      `yaml:"ports"`
 	Clicks     ClicksConfig     `yaml:"clicks"`
@@ -71,6 +75,7 @@ type SettingsConfig struct {
 	Generation GenerationConfig `yaml:"generation"`
 	Image      ImageConfig      `yaml:"image"`
 	Websocket  WebsocketConfig  `yaml:"websocket"`
+	Another    AnotherConfig    `yaml:"another"`
 }
 
 type Config struct {
