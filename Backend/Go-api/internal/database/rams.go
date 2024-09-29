@@ -9,7 +9,7 @@ import (
 func GetTopRams(ctx context.Context, db SQLQueryExec, top int) ([]entities.Ram, error) {
 	query := `SELECT r.id, r.taps, r.description, r.image_url, r.user_id, u.id, u.username, u.avatar_ram_id, u.avatar_box, ra.image_url FROM rams as r
                                      LEFT JOIN users AS u ON u.id=r.user_id 
-                                     LEFT JOIN rams AS ra ON u.avatar_ram_id=ra.user_id 
+                                     LEFT JOIN rams AS ra ON u.avatar_ram_id=ra.id 
     								 ORDER BY r.taps DESC
     								 LIMIT $1`
 	rows, err := db.QueryContext(ctx, query, top)
