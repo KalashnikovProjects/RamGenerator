@@ -117,14 +117,14 @@ async function displayUserRams() {
     for (let ram of userRams) {
         res += createRamElem(ram);
     }
-    document.getElementById("rams").innerHTML = `<div id="rams-list" class="rams-list row row-cols-auto g-3 d-flex justify-content-start">${res}</div>`;
+    document.getElementById("rams").innerHTML = `<div id="rams-list" class="rams-list row row-cols-auto g-3 d-flex">${res}</div>`;
 }
 
 function appendRam(ram) {
     let el = document.getElementById("rams-list");
     let elem = createRamElem(ram);
     if (!el) {
-        document.getElementById("rams").innerHTML = `<div id="rams-list" class="rams-list row row-cols-auto g-3 d-flex justify-content-start">${elem}</div>`;
+        document.getElementById("rams").innerHTML = `<div id="rams-list" class="rams-list row row-cols-auto g-3 d-flex">${elem}</div>`;
     } else {
         el.innerHTML += elem
     }

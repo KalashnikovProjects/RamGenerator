@@ -100,19 +100,14 @@ loadTopRams().then(() => { if (topRams!==undefined) { loadingTopRams = false }})
 
 
 function createRamElem(ram, place) {
-    let style =  `
-    width: 1.5rem;
-    height: 1.5rem;
-    display: inline-block;
-    `
-    style += styleForAvatar(ram.user.avatar_url, ram.user.avatar_box)
+    let style = styleForAvatar(ram.user.avatar_url, ram.user.avatar_box)
     return `<div class="col">
         <div class="ram-card ram-card-index ram-place-${place}" onclick="openRam(mapTopRams[${ram.id}])">
           <img src="${ram.image_url}" class="ram-card-image" alt="${ram.description}">
-          <h3 style="text-align: center">${ram.taps} тапов</h3>
+          <h3 class="text-center taps-top-rams">${ram.taps} тапов</h3>
           <div class="ram-card-user cursor-pointer" onclick="location.href='users/${ram.user.username}';event.stopPropagation()">
-            <div class="user-avatar" style="${style}"></div>
-            <h7 id=="ram-card-username" style="text-align: center">${ram.user.username}</h7>
+            <div class="ram-card-user-avatar user-avatar" style="${style}"></div>
+            <h7 class="text-center ram-card-username">${ram.user.username}</h7>
           </div>
         </div>
       </div>`
