@@ -1,14 +1,15 @@
 {{ define "content" }}
     <link href="static/styles/user.css" rel="stylesheet" crossorigin="anonymous">
+
     <script src="static/js/user.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.2/konva.min.js"></script>
     <script defer src="static/js/user-avatar.js"></script>
 
 
-    <div id="generate-ram" class="user-popup">
+    <div id="generate-ram" class="small-popup">
         <div class="popup-menu"></div>
     </div>
-    <div id="settings" class="user-popup">
+    <div id="settings" class="small-popup">
         <div class="popup-menu">
             <h3 class="text-center settings-title">Настройки аккаунта</h3>
             <div>
@@ -54,12 +55,12 @@
             </button>
         </div>
     </div>
-    <div id="ram" class="user-popup">
+    <div id="ram" class="small-popup">
         <div class="popup-menu">
         </div>
     </div>
     <script>
-        bindUserPopups()
+        bindPopups()
         checkHash()
     </script>
 

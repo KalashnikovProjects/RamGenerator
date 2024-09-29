@@ -2,7 +2,17 @@
 <link href="static/styles/index.css" rel="stylesheet" crossorigin="anonymous">
 <script src="static/js/index.js"></script>
 
-<div class="width-control index-start-section row m-lg-5">
+
+<div id="ram" class="small-popup">
+    <div class="popup-menu">
+    </div>
+</div>
+<script>
+    bindPopups()
+    checkHash()
+</script>
+
+<div class="width-control row index-section">
     <div class="col-md-6 future-image-d">
         <img src="/static/img/future.jpg" class="img-fluid future-image" alt="">
     </div>
@@ -12,4 +22,12 @@
         <script>timeToTapHref()</script>
     </div>
 </div>
+<div class="index-section row mb-4">
+    <h1 class="text-end title-top-ram">Самые крутые бараны</h1>
+</div>
+<div id="rams" class="m-lg-5 bottom-big-margin">
+
+</div>
+<script>displayLoadingTopRams()</script>
+<script>displayTopRams()</script>
 {{ end }}

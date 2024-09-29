@@ -1,3 +1,9 @@
+:root {
+    --scrollY: 0;
+    --screenX: 0;
+    --screenY: 0;
+}
+
 body {
     background-image: url("../img/background.jpg");
     background-size: cover;
@@ -141,4 +147,137 @@ input {
     font-weight: 400;
     align-items: center;
     border-radius: 3rem;
+}
+
+.small-popup {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(0, 0, 0, 0.38);
+    align-items: center;
+    justify-content: center;
+}
+
+.small-popup.target {
+    z-index: 10000;
+    display: flex;
+}
+
+.popup-menu {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    padding: 1.5rem;
+    position: relative;
+    height: 60vh;
+    width: 30vw;
+    background-image: url("../img/background.jpg");
+    background-size: 100vw;
+    border-radius: 1.5rem;
+}
+
+@media (max-width: 1399px) {
+    .popup-menu {
+        top: 10vh;
+        height: 90vh;
+        width: 95vw;
+    }
+}
+
+.ram-description {
+    max-width: 75%;
+    align-self: center;
+    text-align: center;
+}
+
+.loading-image {
+    opacity: 0;
+    transition: opacity 1s linear, visibility 1s linear;
+    margin-top: 20%;
+    align-self: center;
+}
+
+.loading-image-visible {
+    opacity: 1!important;
+}
+@media (max-width: 900px) {
+    .ram-card-description {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 399px) {
+    .ram-card-description {
+        font-size: 0.6rem;
+    }
+}
+
+.ram-content {
+    display: table;
+    margin: 0 auto;
+}
+
+.ram-image {
+    width: 300px;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+@media (min-width: 600px) and (max-width: 1399px) {
+    .ram-image {
+        width: 400px;
+        height: auto;
+    }
+}
+
+@media (min-width: 1500px) {
+    .ram-image {
+        width: 350px;
+        height: auto;
+    }
+}
+
+@media (max-width: 360px) {
+    .ram-image {
+        width: 150px;
+        height: auto;
+    }
+}
+
+.up-button {
+    top: 1.5rem;
+    position: absolute;
+    background: none;
+    border: none;
+}
+
+.up-button img,.up-button svg {
+    width: 28px;
+    height: 28px;
+}
+
+.ram-card {
+    cursor: pointer;
+    border-radius: 0.8rem;
+    padding: 1rem;
+    height: 320px;
+    width: 280px;
+    background-color: rgb(44 44 44 / 16%);
+    text-align: center;
+}
+
+.ram-card-image {
+    border-radius: 1rem;
+    max-height: 80%;
+    max-width: 80%;
+    margin-bottom: 1rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.wait-ram {
+    width: 150px;
+    height: 150px;
 }

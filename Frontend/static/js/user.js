@@ -17,7 +17,7 @@ async function loadUserInfo(username) {
         });
         if (response.ok) {
             userInfo = await response.json();
-            userInfo.avatar_url = await loadAvatar(userInfo.username, userInfo.avatar_ram_id);
+            userInfo.avatar_url = userInfo.avatar_url || DEFAULT_AVATAR;
             userInfo.own = (!!user && user.username === userInfo.username);
             return userInfo
         } else {
@@ -62,15 +62,8 @@ async function displayUserInfo() {
         setTimeout(displayUserInfo, 5);
         return;
     }
-    const [[x1, y1], [x2, y2]] = userInfo.avatar_box;
-    const size = Math.abs(y1 - y2);
-    const moveSize = 1 - size;
-    const posX = Math.min(x1, x2) / moveSize;
-    const posY = Math.min(y1, y2) / moveSize;
-    let imageStyle =  `
-    background-size: ${100 / size}%;
-    background-position: ${posX * 100}% ${posY * 100}%;
-    background-image: url(${userInfo.avatar_url});`;
+    let imageStyle = styleForAvatar(userInfo.avatar_url, userInfo.avatar_box)
+
     let imageOnclick = "";
     if (userInfo.avatar_ram_id !== 0) {
         imageStyle += "cursor: pointer;";
@@ -81,9 +74,9 @@ async function displayUserInfo() {
     <div class="user-card-avatar" ${imageOnclick} style="${imageStyle}"></div>
     <h3 class="user-card-username">${userInfo.username}</h3>`;
     if (userInfo.own) {
-        res += `<button class="button-user left-button-user row first-button-user" onclick="location.hash='#generate-ram'; ramGenerator = new Generator()">Сгенерировать барана</button>
+        res += `<button class="button-user left-button-user row first-button-user" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать барана</button>
                 <button class="button-user left-button-user row " disabled onclick="location.href='/trade'">Обменять баранов</button>
-                <button class="button-user left-button-user row last-button-user" onclick="location.hash='#settings'">Настройки аккаунта</button>`;
+                <button class="button-user left-button-user row last-button-user" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');">Настройки аккаунта</button>`;
     } else {
 
     }
@@ -109,7 +102,7 @@ async function displayUserRams() {
             document.getElementById("rams").innerHTML = `
             <div class="text-center top-to-center">
                 <h2 class="m-1 mb-2">У вас пока-что нету баранов</h2>
-                <a class="button-user" onclick="location.hash='#generate-ram';ramGenerator = new Generator()">Сгенерировать барана</a>
+                <a class="button-user" onclick="updateHash('#generate-ram');ramGenerator = new Generator()">Сгенерировать барана</a>
             </div>`;
         } else {
             document.getElementById("rams").innerHTML = `
@@ -239,10 +232,11 @@ class Generator {
     }
 
     async initialize() {
+        document.getElementById("generate-ram").classList.add('target');
         document.querySelector("#generate-ram .popup-menu").innerHTML = `
              <h4 id="generation-title" class="text-center">Генерация барана</h2>
              <div id="generation-content" class="text-center">
-                <img id="loading-image-generator" src="/static/img/icon512.png" class="loading-image rotating-image img-fluid wait-ram" alt="Загрузка..." style="cursor: pointer">
+                <img id="loading-image-generator" src="/static/img/icon512.png" class="loading-image rotating-image img-fluid wait-ram cursor-pointer" alt="Загрузка...">
             </div>
              <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
                  <svg xmlns="http://www.w3.org/2000/svg" fill="white" class="bi bi-x" viewBox="0 0 16 16">
@@ -254,7 +248,7 @@ class Generator {
             await sleep(5);
         }
         if (!userInfo.own) {
-            location.hash = "";
+            updateHash('')
         }
         this.connectWs();
     }
@@ -363,7 +357,7 @@ class Generator {
 
     close() {
         this.preventError = true
-        if (this.websocket.readyState !== WebSocket.CLOSED) {
+        if (this.websocket && this.websocket.readyState !== WebSocket.CLOSED) {
             try {
                 if (this.targetedClicker) {
                     this.targetedClicker.close();
@@ -440,7 +434,7 @@ class Generator {
                 this.needClicks = data.clicks;
                 content.innerHTML = `
                     <h4 class="text-center tap-label">Тапните ${this.needClicks} раз, чтобы сгенерировать барана</h4>
-                    <img id="clicker" src="/static/img/rambox1.png" class="tap-generate-img" alt="" style="cursor: pointer;">
+                    <img id="clicker" src="/static/img/rambox1.png" class="tap-generate-img cursor-pointer" alt="">
                     <h2 id="clicks" class="text-center">0/${this.needClicks}</h2>`;
                 this.targetedClicker = new TargetedClicker(
                     this.needClicks,
@@ -458,7 +452,7 @@ class Generator {
                     content.innerHTML = `
                     <h4 class="text-center" style="margin-top: 20%">Вы очень быстро тапали!</h4>
                     <h6 class="text-center">Подождите, баран ещё не успел сгенерироваться...</h6>
-                    <img id="wait-ram" src="/static/img/icon512.png" class="img-fluid wait-ram" alt="" style="cursor: pointer;">
+                    <img id="wait-ram" src="/static/img/icon512.png" class="img-fluid wait-ram cursor-pointer" alt="">
                     <h3 id="wait-clicks" class="text-center"></h3>`;
                     this.targetedClicker = new Clicker(
                         "wait-ram",
@@ -502,6 +496,7 @@ async function getRam(username, id) {
 
 class RamPage {
     constructor(id) {
+        document.getElementById("ram").classList.add('target');
         let elem =  document.querySelector("#ram .popup-menu");
         elem.innerHTML = `
              <h4 id="ram-description" class="ram-description">Загрузка барана...</h2>
@@ -609,7 +604,7 @@ class RamPage {
 
     close(destroy=true) {
         this.preventError = true
-        if (this.websocket.readyState !== WebSocket.CLOSED) {
+        if (this.websocket && this.websocket.readyState !== WebSocket.CLOSED) {
             try {
                 if (this.clicker) {
                     this.clicker.close();
@@ -657,8 +652,6 @@ class RamPage {
 }
 
 async function openRam(id) {
-    location.hash = "#ram";
-
     const url = new URL(location);
     url.searchParams.set("ram-id", `${id}`);
     history.pushState({}, "", url);
@@ -742,7 +735,7 @@ function changeUsername(event) {
                 el.classList.remove("text-danger");
                 el.innerText = "Успешно сохранено, сейчас страница перезагрузится"
                 setTimeout(() => {
-                    location.hash = "";
+                    updateHash('')
                     location.href = `users/${user.username}`;
                 }, 3000)
             });
@@ -795,22 +788,12 @@ async function bindSettingsForms() {
     }
 }
 
-async function bindUserPopups() {
-    for (const elem of document.getElementsByClassName("user-popup")) {
-        elem.addEventListener("mousedown", function (event) {
-            if(event.target.classList.contains("user-popup")) {
-                closePopup()
-            }}
-        );
-    }
-}
-
 async function checkHash() {
     if (location.hash === "#generate-ram" && user.username === userInfoUsername) {
         ramGenerator = new Generator();
     }
-    if (location.hash === "#ram") {
-        const url = new URL(location);
+    const url = new URL(location);
+    if (url.searchParams.get("ram-id")) {
         ramPage = new RamPage(parseInt(url.searchParams.get("ram-id")))
     }
 }
@@ -824,24 +807,32 @@ async function closeCanvas() {
 
 function closePopup() {
     try {
+        const url = new URL(location);
         if (ramGenerator) {
-            ramGenerator.close();
+            updateHash('')
+            ramGenerator.close(true);
+            document.getElementById("generate-ram").classList.remove('target');
         }
         if (ramPage) {
-            ramPage.close();
+            ramPage.close(true);
+            document.getElementById("ram").classList.remove('target');
         }
         if (isCanvasMode) {
             closeCanvas()
         }
+
+        if (location.hash === "#settings") {
+            updateHash('')
+            document.getElementById('settings').classList.remove('target')
+        }
+
+        if (url.searchParams.has("ram-id")) {
+            url.searchParams.delete("ram-id");
+            history.pushState({}, "", url);
+        }
+
     } catch (e) {}
 
-    location.hash = "";
-
-    const url = new URL(location);
-    if (url.searchParams.has("ram-id")) {
-        url.searchParams.delete("ram-id");
-        history.pushState({}, "", url);
-    }
 }
 
 window.addEventListener('beforeunload', closePopup);
