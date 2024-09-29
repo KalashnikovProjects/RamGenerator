@@ -150,7 +150,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 // Me возвращает информацию о пользователе, владельце токена из Authorization
 func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	dbUser, err := database.GetUserContext(ctx, h.db, ctx.Value("userId").(int))
+	dbUser, err := database.GetUserWithAvatarUrlContext(ctx, h.db, ctx.Value("userId").(int))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, fmt.Sprintf("can't recognize your permissions, please relogin"), http.StatusUnauthorized)

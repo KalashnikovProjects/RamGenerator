@@ -24,6 +24,28 @@ func GetUserContext(ctx context.Context, db SQLQueryExec, id int) (entities.User
 	return user, nil
 }
 
+func GetUserWithAvatarUrlContext(ctx context.Context, db SQLQueryExec, id int) (entities.User, error) {
+	query := `SELECT u.id, u.username, password_hash, u.daily_ram_generation_time, u.rams_generated_last_day, u.clickers_blocked_until, u.avatar_ram_id, u.avatar_box, r.image_url FROM users as u
+                                                        LEFT JOIN rams AS r ON u.avatar_ram_id=r.id 
+                                                        WHERE u.id=$1`
+	row := db.QueryRowContext(ctx, query, id)
+	user := entities.User{}
+	var rawAvatarBox string
+	var avatarUrl *string
+	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.ClickersBlockedUntil, &user.AvatarRamId, &rawAvatarBox, &avatarUrl)
+	if err != nil {
+		return entities.User{}, err
+	}
+	user.AvatarBox, err = entities.NewBox(rawAvatarBox)
+	if avatarUrl != nil {
+		user.AvatarUrl = *avatarUrl
+	}
+	if err != nil {
+		return entities.User{}, err
+	}
+	return user, nil
+}
+
 func GetUserByUsernameContext(ctx context.Context, db SQLQueryExec, username string) (entities.User, error) {
 	query := `SELECT id, username, password_hash, daily_ram_generation_time, rams_generated_last_day, clickers_blocked_until, avatar_ram_id, avatar_box FROM users
                                                         WHERE username=$1`
@@ -36,6 +58,28 @@ func GetUserByUsernameContext(ctx context.Context, db SQLQueryExec, username str
 		return entities.User{}, err
 	}
 	user.AvatarBox, err = entities.NewBox(rawAvatarBox)
+	if err != nil {
+		return entities.User{}, err
+	}
+	return user, nil
+}
+
+func GetUserByUsernameWithAvatarUrlContext(ctx context.Context, db SQLQueryExec, username string) (entities.User, error) {
+	query := `SELECT u.id, u.username, password_hash, u.daily_ram_generation_time, u.rams_generated_last_day, u.clickers_blocked_until, u.avatar_ram_id, u.avatar_box, r.image_url FROM users as u
+                                                        LEFT JOIN rams AS r ON u.avatar_ram_id=r.id 
+                                                        WHERE u.username=$1`
+	row := db.QueryRowContext(ctx, query, username)
+	user := entities.User{}
+	var rawAvatarBox string
+	var avatarUrl *string
+	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.DailyRamGenerationTime, &user.RamsGeneratedLastDay, &user.ClickersBlockedUntil, &user.AvatarRamId, &rawAvatarBox, &avatarUrl)
+	if err != nil {
+		return entities.User{}, err
+	}
+	user.AvatarBox, err = entities.NewBox(rawAvatarBox)
+	if avatarUrl != nil {
+		user.AvatarUrl = *avatarUrl
+	}
 	if err != nil {
 		return entities.User{}, err
 	}

@@ -21,8 +21,9 @@ type User struct {
 	RamsGeneratedLastDay   int `json:"rams_generated_last_day"`   // Изменяется только при ws/generate-ram
 	ClickersBlockedUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
 
-	AvatarRamId int  `json:"avatar_ram_id"`
-	AvatarBox   *Box `json:"avatar_box"` // 4 координаты, обрезающие аватар, координаты от 0 до 1
+	AvatarRamId int    `json:"avatar_ram_id"`
+	AvatarBox   *Box   `json:"avatar_box,omitempty"` // 4 координаты, обрезающие аватар, координаты от 0 до 1
+	AvatarUrl   string `json:"avatar_url,omitempty"`
 }
 
 func (u *User) CalculateRamsGeneratedLastDay(timeBetweenDaily int) int {
@@ -37,6 +38,7 @@ type Ram struct {
 	Taps        int    `json:"taps"`        // Изменяется только через ws/clicker
 	Description string `json:"description"` // Оно же промпт для нейросети
 	ImageUrl    string `json:"image_url"`
+	User        *User  `json:"user,omitempty"`
 	UserId      int    `json:"user_id"` // Изменяется только через трейды
 }
 
