@@ -404,6 +404,7 @@ class Generator {
             this.close();
             // TODO анимация завершения
             appendRam(data);
+            document.getElementById("generate-ram").classList.remove('target');
             openRam(data.id);
             return
         }
@@ -653,6 +654,7 @@ class RamPage {
 
 async function openRam(id) {
     const url = new URL(location);
+    url.hash = ""
     url.searchParams.set("ram-id", `${id}`);
     history.pushState({}, "", url);
     ramPage = new RamPage(id)

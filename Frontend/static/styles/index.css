@@ -112,6 +112,10 @@
     height: 300px;
 }
 
+.ram-content-index {
+    margin-top: 2rem;
+}
+
 .bottom-big-margin {
     margin-bottom: 30vh !important;
 }

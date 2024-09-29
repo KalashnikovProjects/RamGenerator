@@ -26,8 +26,8 @@ async function indexRam(ram) {
                 <div class="user-avatar" style="${style}"></div>
                 <h7 id="ram-card-username" style="text-align: center">${ram.user.username}</h7>
              </div>
-             <div id="ram-content" class="text-center ram-content">
-                <img id="ram-clicker" class="ram-image mt-5" src="${ram.image_url}" alt="ram">
+             <div id="ram-content" class="text-center ram-content ram-content-index">
+                <img id="ram-clicker" class="ram-image" src="${ram.image_url}" alt="ram">
                 <div id="taps-line" class="mt-3"><h3 id="ram-clicked">${ram.taps} тапов</h3></div>
              </div>
              <button id="close-button" style="right:1.5rem" class="up-button" onclick="closePopup()">
@@ -81,6 +81,7 @@ async function loadTopRams() {
         if (response.ok) {
             topRams = await response.json();
             for (ram of topRams) {
+                ram.user.avatar_url = ram.user.avatar_url || DEFAULT_AVATAR;
                 mapTopRams[ram.id] = ram
             }
         } else {
