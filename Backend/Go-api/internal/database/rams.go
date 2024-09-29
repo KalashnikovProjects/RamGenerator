@@ -7,8 +7,10 @@ import (
 )
 
 func GetTopRams(ctx context.Context, db SQLQueryExec, top int) ([]entities.Ram, error) {
-	query := `SELECT id, taps, description, image_url, user_id FROM rams
-    								 ORDER BY taps DESC
+	query := `SELECT r.id, r.taps, r.description, r.image_url, r.user_id, u.id, u.username, u.avatar_ram_id, u.avatar_box, ra.image_url FROM rams as r
+                                     LEFT JOIN users AS u ON u.id=r.user_id 
+                                     LEFT JOIN rams AS ra ON u.avatar_ram_id=ra.user_id 
+    								 ORDER BY r.taps DESC
     								 LIMIT $1`
 	rows, err := db.QueryContext(ctx, query, top)
 	if err != nil {
@@ -17,8 +19,11 @@ func GetTopRams(ctx context.Context, db SQLQueryExec, top int) ([]entities.Ram, 
 	res := make([]entities.Ram, 0)
 	defer rows.Close()
 	for rows.Next() {
-		ram := entities.Ram{}
-		err := rows.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId)
+		var rawAvatarBox string
+
+		ram := entities.Ram{User: &entities.User{}}
+		err := rows.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId, &ram.User.Id, &ram.User.Username, &ram.User.AvatarRamId, &rawAvatarBox, &ram.User.AvatarUrl)
+		ram.User.AvatarBox, err = entities.NewBox(rawAvatarBox)
 		if err != nil {
 			return []entities.Ram{}, err
 		}
@@ -33,6 +38,19 @@ func GetRamContext(ctx context.Context, db SQLQueryExec, id int) (entities.Ram, 
 	row := db.QueryRowContext(ctx, query, id)
 	ram := entities.Ram{}
 	err := row.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId)
+	if err != nil {
+		return entities.Ram{}, err
+	}
+	return ram, nil
+}
+
+func GetRamWithUsernameContext(ctx context.Context, db SQLQueryExec, id int) (entities.Ram, error) {
+	query := `SELECT r.id, r.taps, r.description, r.image_url, r.user_id, u.id, u.username FROM rams as r
+                                           LEFT JOIN users AS u ON u.id=r.user_id 
+                                           WHERE r.id=$1`
+	row := db.QueryRowContext(ctx, query, id)
+	ram := entities.Ram{User: &entities.User{}}
+	err := row.Scan(&ram.Id, &ram.Taps, &ram.Description, &ram.ImageUrl, &ram.UserId, &ram.User.Id, &ram.User.Username)
 	if err != nil {
 		return entities.Ram{}, err
 	}

@@ -20,7 +20,7 @@ func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params := mux.Vars(r)
 
-	user, err := database.GetUserByUsernameContext(ctx, h.db, params["username"])
+	user, err := database.GetUserByUsernameWithAvatarUrlContext(ctx, h.db, params["username"])
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, fmt.Sprintf("no users with username = %s", params["username"]), http.StatusNotFound)

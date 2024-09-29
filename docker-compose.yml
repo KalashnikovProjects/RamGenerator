@@ -14,7 +14,6 @@ services:
     image: postgres
     hostname: postgres
     container_name: my_postgres
-    restart: always
     env_file:
       - .env
     volumes:
@@ -64,7 +63,6 @@ services:
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4:8.8
-    restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
       PGADMIN_DEFAULT_PASSWORD: "root"
