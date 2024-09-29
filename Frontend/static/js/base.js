@@ -14,25 +14,6 @@ if ('serviceWorker' in navigator) {
         .catch((err) => console.log(err));
 }
 
-async function loadAvatar(username, ramId) {
-    if (ramId === 0) {
-        return DEFAULT_AVATAR
-    }
-    const response = await fetch(`${API_URL}/users/${username}/rams/${ramId}`, {
-        mode: 'cors',
-        method: 'GET',
-    });
-
-    if (response.ok) {
-        let ram = await response.json();
-        return ram.image_url
-    } else {
-        const errorText = await response.text();
-        console.error('Error response:', response.status, errorText);
-        return DEFAULT_AVATAR
-    }
-}
-
 async function loadUser() {
     try {
         const token = getCookie("token");
@@ -59,7 +40,7 @@ async function loadUser() {
 
         if (response.ok) {
             user = await response.json();
-            user.avatar_url = await loadAvatar(user.username, user.avatar_ram_id);
+            user.avatar_url = user.avatar_url || DEFAULT_AVATAR;
             sessionStorage.setItem("user", JSON.stringify(user));
             return user
         } else {
@@ -84,6 +65,21 @@ loadUser().then(
     }
 )
 
+function styleForAvatar(avatar_url, avatar_box) {
+    const [[x1, y1], [x2, y2]] = avatar_box;
+    const size = Math.abs(y1 - y2);
+    const moveSize = 1 - size;
+    const posX = Math.min(x1, x2) / moveSize;
+    const posY = Math.min(y1, y2) / moveSize;
+
+    return `
+    background-repeat: no-repeat;
+    background-size: ${100 / size}%;
+    background-position: ${posX * 100}% ${posY * 100}%;
+    background-image: url(${avatar_url});
+    `
+}
+
 async function displayUser() {
     if (loadingUser) {
         setTimeout(displayUser, 5)
@@ -101,27 +97,40 @@ async function displayUser() {
     const posX = Math.min(x1, x2) / moveSize;
     const posY = Math.min(y1, y2) / moveSize;
 
-    const style =  `
+    let style =  `
     width: 1.5rem;
     height: 1.5rem;
-    background-repeat: no-repeat;
     display: inline-block;
-    background-size: ${100 / size}%;
-    background-position: ${posX * 100}% ${posY * 100}%;
-    background-image: url(${user.avatar_url});
     `
+    style += styleForAvatar(user.avatar_url, user.avatar_box)
     document.getElementById("user-box").innerHTML = `
     <div class="header-button">
     <a class="user-account" href="/users/${user.username}">
     <div class="user-avatar" style="${style}">
     </div>${user.username}</a>
     <div class="logout" onclick="logOut()">
-    <svg xmlns="http://www.w3.org/2000/svg" width="1.2rem" height="1.2rem" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+    <svg xmlns="http://www.w3.org/2000/svg" width="21px" height="28px" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
         <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
         <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
         </svg>
     </div>
     </div>`
+}
+
+async function bindPopups() {
+    for (const elem of document.getElementsByClassName("small-popup")) {
+        elem.addEventListener("mousedown", function (event) {
+            if(event.target.classList.contains("small-popup")) {
+                closePopup()
+            }}
+        );
+    }
+}
+
+async function updateHash(hash) {
+    const url = new URL(location);
+    url.hash = hash
+    history.pushState({}, "", url);
 }
 
 async function listenSearch() {
@@ -149,3 +158,15 @@ async function listenSearch() {
         location.href=`users/${searchInput.value}`;
     });
 }
+
+document.addEventListener('scroll', () => {
+    document.documentElement.style.setProperty('--scrollY', this.scrollY);
+});
+
+function onResize(event) {
+    document.documentElement.style.setProperty('--screenX', window.innerWidth)
+    document.documentElement.style.setProperty('--screenY', window.innerHeight)
+}
+addEventListener("resize", onResize, true);
+
+onResize(null)

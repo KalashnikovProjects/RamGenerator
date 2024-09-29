@@ -14,21 +14,70 @@
     object-fit: scale-down;
     height: 45vh;
     border-radius: 1rem;
+    float: right;
 }
 
 @media (min-width: 1200px) {
     .future-image {
-        float: right;
-        margin: 5rem 7em 0 3em;
+        margin: 2rem 7em 0 3em;
     }
 }
 
-@media (min-width: 1200px) {
-    .index-right-texts {
-        margin-top: 5rem;
+@media (max-height: 650px) and (max-width: 1199px)  {
+    .future-image-d {
+        width: 40%;
     }
-    .index-start-section {
-        margin-top: 5rem!important;
+    .index-right-texts {
+        width: 60%;
+    }
+}
+
+@media (max-width: 600px){
+    .big-text4 {
+        font-size: 5rem;
+    }
+    .big-text3 {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 350px) or (max-height: 600px) {
+    .big-text4 {
+        font-size: 3.5rem;
+    }
+    .big-text3 {
+        font-size: 2.5rem;
+    }
+}
+
+.index-section {
+    margin-bottom: 15vh;
+}
+
+
+@media (min-width: 1200px) {
+    .index-section {
+        margin-bottom: 24vh;
+        margin-top: 8vh;
+    }
+}
+
+@media (max-width: 770px) {
+    .index-section {
+        margin-bottom: 25vh;
+    }
+}
+
+@media (max-width: 500px) {
+    .index-section {
+        margin-bottom: 5vh;
+    }
+}
+
+@media (min-height: 780px) and (min-width: 1200px)  {
+    .index-section {
+        margin-bottom: 30vh;
+        margin-top: 16vh;
     }
 }
 
@@ -38,8 +87,51 @@
     }
 }
 
-@media (min-width: 1000px) {
-    .row {
-        margin-top: 10rem;
-    }
+.title-top-ram {
+    transition: 0.5s;
+    opacity: max(0.1, calc(0.1 + var(--scrollY) / var(--screenY) * 2));
+    padding-right: calc(min(100, max(20, calc(20 + var(--scrollY) / 10))) * 1px);
+    padding-left: 25vw;
+}
+
+.ram-card-user {
+    display: inline-flex;
+    margin-top: auto;
+}
+
+.ram-user {
+    display: inline-flex;
+    align-self: center;
+}
+
+.ram-card-index {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 250px;
+    height: 300px;
+}
+
+.bottom-big-margin {
+    margin-bottom: 30vh !important;
+}
+
+.ram-place-1 {
+    background-color: rgba(255, 222, 0, 0.14);
+}
+
+.ram-place-2 {
+    background-color: rgba(255, 247, 247, 0.15);
+}
+
+.ram-place-3 {
+    background-color: rgba(255, 148, 36, 0.05);
+}
+
+.ram-place-4 {
+    background-color: rgba(131, 175, 165, 0.06);
+}
+
+.ram-place-5 {
+    background-color: rgba(70, 70, 70, 0.06);
 }
