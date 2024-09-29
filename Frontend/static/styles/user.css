@@ -10,6 +10,12 @@
     }
 }
 
+@media (max-width: 767px) {
+    .rams-list {
+        justify-content: center;
+    }
+}
+
 @media (min-width: 600px) {
     .rams-list {
         margin-left: 2rem;
@@ -20,6 +26,13 @@
     .ram-card {
         height: 200px;
         width: 160px;
+        border-radius: 0.3rem;
+    }
+
+    .ram-card-image {
+        border-radius: 0.3rem;
+        max-width: 85%;
+        margin-bottom: 0.7rem;
     }
 }
 
@@ -93,7 +106,7 @@
     }
 
     .user-card {
-        padding: 1rem;
+        padding: 1.5rem;
         border-right: 1px solid rgba(255,255,255,0.3);
     }
 
@@ -141,7 +154,7 @@
 
     .user-card {
         flex-direction: column;
-        padding: 0.5rem;
+        padding: 1.5rem;
         border-bottom: 1px solid rgba(255,255,255,0.3);
     }
 

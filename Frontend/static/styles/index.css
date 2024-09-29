@@ -75,13 +75,7 @@
     }
 }
 
-@media (max-width: 1450px) or (min-width: 601px) {
-    .index-left-texts {
-        padding-left: 2rem;
-    }
-}
-
-@media (max-width: 1450px) or (min-width: 601px) {
+@media (max-width: 1450px) and (min-width: 400px) {
     .index-left-texts {
         padding-left: 2rem;
     }
@@ -104,12 +98,74 @@
     align-self: center;
 }
 
+.ram-card-user-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.3rem;
+}
+
 .ram-card-index {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 250px;
     height: 300px;
+    border-radius: 0.6rem;
+}
+
+@media (max-width: 600px) {
+    .ram-card-index {
+        border-radius: 0.4rem;
+        width: 160px;
+        height: 210px;
+        padding: 0.7rem;
+    }
+    .taps-top-rams {
+        font-size: 1.2rem;
+    }
+
+    .ram-card-image {
+        border-radius: 0.6rem;
+        max-width: 95%;
+        margin-bottom: 0.3rem;
+    }
+
+    .ram-card-username {
+        font-size: 0.9rem;
+    }
+
+    .ram-card-user-avatar {
+        width: 1.1rem;
+        height: 1.2rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .ram-card-index {
+        border-radius: 0.3rem;
+        width: 100px;
+        height: 145px;
+        padding: 0.4rem;
+    }
+
+    .taps-top-rams {
+        font-size: 1rem;
+    }
+
+    .ram-card-image {
+        border-radius: 0.5rem;
+        max-width: 95%;
+        margin-bottom: 0.3rem;
+    }
+
+    .ram-card-username {
+        font-size: 0.75rem;
+    }
+
+    .ram-card-user-avatar {
+        width: 1.1rem;
+        height: 1.2rem;
+    }
 }
 
 .ram-content-index {
