@@ -176,6 +176,18 @@
     margin-bottom: 30vh !important;
 }
 
+@media (max-width: 1100px) {
+    .bottom-big-margin {
+        margin-bottom: 15vh !important;
+    }
+}
+
+@media (max-width: 399px) {
+    .bottom-big-margin {
+        margin-bottom: 8vh !important;
+    }
+}
+
 .ram-place-1 {
     background-color: rgba(255, 222, 0, 0.14);
 }
