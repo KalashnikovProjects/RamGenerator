@@ -21,6 +21,13 @@ function toImg() {
     ramPage = new RamPage(parseInt(url.searchParams.get("ram-id")));
 }
 
+async function closeCanvas() {
+    stage.destroy();
+    stage = null;
+    isCanvasMode = false;
+    document.querySelector("#ram .popup-menu").innerHTML = ``
+}
+
 function toCanvas() {
     let img = document.getElementById('ram-clicker');
     const width = img.width;

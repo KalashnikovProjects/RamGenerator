@@ -16,12 +16,6 @@
     }
 }
 
-@media (min-width: 600px) {
-    .rams-list {
-        margin-left: 2rem;
-    }
-}
-
 @media (max-width: 900px) {
     .ram-card {
         height: 200px;
@@ -47,7 +41,6 @@
 .user-card {
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
 }
 
 .button-user {
@@ -73,6 +66,10 @@
     cursor: unset;
 }
 
+.button-user:disabled img {
+    opacity: 0.2;
+}
+
 .button-user:hover:not(:disabled) {
     background-color: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.3);
@@ -85,8 +82,9 @@
     max-width: 300px;
 }
 
-.first-button-user {
-    margin-top: 3vh;
+.user-card-profile {
+    display: flex;
+    flex-direction: column;
 }
 
 .user-card-avatar {
@@ -98,6 +96,12 @@
     overflow: hidden;
     display: inline-block;
     border-radius: 0.4rem;
+}
+
+.user-card-username {
+    margin-bottom: 0;
+    text-align: center;
+    margin-top: 5px;
 }
 
 @media (min-width: 768px) {
@@ -116,10 +120,6 @@
         width: 80%;
     }
 
-    .user-card-username {
-        text-align: center;
-    }
-
     .last-button-user {
         margin-top: 10vh;
     }
@@ -130,6 +130,20 @@
 
     .left-button-user {
         max-width: unset;
+    }
+
+    .user-buttons-normal {
+        margin-top: 3vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-buttons-mobile {
+        display: none!important;
+    }
+
+    .rams-list {
+        margin-left: 2rem;
     }
 }
 
@@ -153,18 +167,87 @@
     }
 
     .user-card {
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: space-between;
         padding: 1.5rem;
         border-bottom: 1px solid rgba(255,255,255,0.3);
     }
 
-    .user-card-avatar {
+    .user-card-profile {
         margin-left: 5%;
-        width: 30%;
+        width: 25vw;
     }
 
+    .user-card-avatar {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0;
+    }
+
+    .user-buttons-normal {
+        display: none!important;
+    }
+
+    .user-buttons-mobile {
+        align-self: end;
+        width: 35vw;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-right: 1rem;
+        gap: 1rem;
+    }
+
+    .button-create-mobile {
+        grid-column: 1 / -1;
+    }
+
+    .left-button-user-mobile {
+        font-size: 1.25rem;
+        margin-top: 0;
+        height: 60px;
+        display: block;
+        padding: 0;
+    }
+
+    .mobile-userinfo-icon {
+        width: 1.7em;
+        height: 1.7em;
+        margin-left: 0.3em;
+    }
+}
+
+@media (max-width: 649px) {
+    .user-buttons-mobile {
+        gap: 0.5rem;
+    }
+
+    .left-button-user-mobile {
+        font-size: 1rem;
+        height: 45px;
+    }
+}
+
+@media (max-width: 499px) {
     .user-card-username {
-        margin-left: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .left-button-user-mobile {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 430px) {
+    .left-button-user-mobile {
+        font-size: 0.65rem;
+        height: 40px;
+    }
+}
+
+@media (max-width: 349px) {
+    .left-button-user-mobile {
+        font-size: 0.5rem;
+        height: 30px;
     }
 }
 

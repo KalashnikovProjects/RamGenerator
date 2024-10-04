@@ -71,14 +71,22 @@ async function displayUserInfo() {
     }
 
     let res = `
-    <div class="user-card-avatar" ${imageOnclick} style="${imageStyle}"></div>
-    <h3 class="user-card-username">${userInfo.username}</h3>`;
+    <div class="user-card-profile">
+        <div class="user-card-avatar" ${imageOnclick} style="${imageStyle}"></div>
+        <h3 class="user-card-username">${userInfo.username}</h3>
+    </div>
+    `;
     if (userInfo.own) {
-        res += `<button class="button-user left-button-user row first-button-user" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать барана</button>
-                <button class="button-user left-button-user row " disabled onclick="location.href='/trade'">Обменять баранов</button>
-                <button class="button-user left-button-user row last-button-user" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');">Настройки аккаунта</button>`;
-    } else {
-
+        res += `<div class="user-buttons-normal">
+        <button class="button-user left-button-user row" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать барана</button>
+        <button class="button-user left-button-user row " disabled onclick="location.href='/trade'">Обменять баранов</button>
+        <button class="button-user left-button-user row last-button-user" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');">Настройки аккаунта</button>
+    </div>
+    <div class="user-buttons-mobile">
+        <button class="button-user left-button-user-mobile button-create-mobile" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать<img src="/static/img/generate-ram.svg" class="mobile-userinfo-icon" alt="барана"></button>
+        <button class="button-user left-button-user-mobile" disabled onclick="location.href='/trade'"><img src="/static/img/trade.svg" class="mobile-userinfo-icon" alt="Трейды"></button>
+        <button class="button-user left-button-user-mobile" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');"><img src="/static/img/settings.svg" class="mobile-userinfo-icon" alt="Настройки"></button>
+    </div>`;
     }
     document.getElementById("user-card").innerHTML = res;
 }
@@ -214,12 +222,15 @@ class TargetedClicker extends Clicker {
         super(clickElemId, onclickCallback, sendClicksCallback);
         this.target = target;
         this.endCallback = endCallback;
+        this.endCallbacked = false;
     }
 
     onclick() {
         super.onclick();
-        if (this.clicksCount >= this.target) {
-            this.close();
+        if (this.clicksCount < this.target) {
+            super.onclick();
+        } else if (!this.endCallbacked) {
+            this.endCallbacked = true
             this.endCallback()
         }
     }
@@ -252,7 +263,6 @@ class Generator {
         }
         this.connectWs();
     }
-
 
     connectWs() {
         let apiUrl = new URL(API_URL);
@@ -361,6 +371,7 @@ class Generator {
             try {
                 if (this.targetedClicker) {
                     this.targetedClicker.close();
+                    this.targetedClicker = undefined
                 }
                 this.websocket.close();
             } catch (e) {}
@@ -376,7 +387,7 @@ class Generator {
     }
 
     endClicker () {
-        this.targetedClicker = undefined;
+        // this.targetedClicker = undefined;
     }
 
     changeClicksValue(value) {
@@ -448,8 +459,11 @@ class Generator {
                 this.imageGenerated = true;
                 break;
             case "success clicked":
-                if (this.imageGenerated) {
-                } else {
+                try {
+                    this.targetedClicker.close()
+                    this.targetedClicker = undefined
+                } catch (e) {}
+                if (!this.imageGenerated) {
                     content.innerHTML = `
                     <h4 class="text-center" style="margin-top: 20%">Вы очень быстро тапали!</h4>
                     <h6 class="text-center">Подождите, баран ещё не успел сгенерироваться...</h6>
@@ -800,13 +814,6 @@ async function checkHash() {
     }
 }
 
-async function closeCanvas() {
-    stage.destroy();
-    stage = null;
-    isCanvasMode = false;
-    document.querySelector("#ram .popup-menu").innerHTML = ``
-}
-
 function closePopup() {
     try {
         const url = new URL(location);
@@ -820,6 +827,7 @@ function closePopup() {
             document.getElementById("ram").classList.remove('target');
         }
         if (isCanvasMode) {
+            document.getElementById("ram").classList.remove('target');
             closeCanvas()
         }
 
