@@ -256,11 +256,13 @@
 }
 
 .prompt-input {
+    max-width: 100%;
     margin-top: 5%;
     padding: 0.5rem;
 }
 
 .prompt-label {
+    max-width: 100%;
     font-size: 1.5rem;
 }
 

@@ -134,7 +134,7 @@ body {
 
 @media (max-width: 300px) {
     .project-title {
-        font-size: 10px;
+        font-size: 15px;
     }
     .ram-icon {
         width: 20px;
