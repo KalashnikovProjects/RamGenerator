@@ -1,7 +1,12 @@
-{{ define "content" }}
+{{ define "body" }}
 
-<div class="text-center" style="margin-top: 32vh">
-    <h1 class="m-1 mb-2">{{ .ErrorText }}</h1>
-    <a class="tap-text" style="font-size: 1.5rem" href="/">Вернуться на главную</a>
-</div>
+{{ template "header" . }}
+
+<section class="m-0 overflow-hidden">
+    <div class="text-center" style="margin-top: 32vh">
+        <h1 class="m-1 mb-2">{{ .ErrorText }}</h1>
+        <a class="tap-text" style="font-size: 1.5rem" href="/">Вернуться на главную</a>
+    </div>
+</section>
+
 {{ end }}
