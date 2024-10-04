@@ -281,3 +281,20 @@ input {
     width: 150px;
     height: 150px;
 }
+
+@media (max-width: 767px) {
+    .footer-flex {
+        justify-content: space-between;
+    }
+
+    .developer-footer {
+        font-size: 0.9rem;
+    }
+}
+
+
+@media (min-width: 768px) {
+    .footer-flex {
+        justify-content: space-around;
+    }
+}
