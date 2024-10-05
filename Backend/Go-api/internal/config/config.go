@@ -55,6 +55,7 @@ type PortsConfig struct {
 }
 
 type ClicksConfig struct {
+	CPSLimit  int   `yaml:"cps_limit"`
 	FirstRam  int   `yaml:"first_ram"`
 	DailyRams []int `yaml:"daily_rams"`
 }
