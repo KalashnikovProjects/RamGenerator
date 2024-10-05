@@ -11,7 +11,7 @@ async function clickResize(elem, scale=0.95, time=300) {
     setTimeout(() => {elem.style.transform = ""}, time)
 }
 
-async function clickEffect(x, y, effectImg, endTime=1) {
+async function effect(x, y, effectImg, endTime=1) {
     const effectElem = document.createElement('img')
     effectElem.src = effectImg;
     effectElem.className = 'floatingEffect';
@@ -39,7 +39,7 @@ async function clickEffect(x, y, effectImg, endTime=1) {
 
         effectElem.style.transform = `translate(${x}px, ${y}px)`;
 
-        if (time >= endTime - 0.5) {
+        if (time >= endTime * 0.7) {
             effectElem.style.opacity = '0';
         }
 
@@ -439,11 +439,21 @@ class Generator {
         // this.targetedClicker = undefined;
     }
 
+    finalRamConfetti() {
+        const elem = document.getElementById("clicker") ?? document.getElementById("wait-ram");
+        const elemBox = elem.getBoundingClientRect();
+        for (let i=0; i < 80; i++) {
+            let coords = [elemBox.left + (elemBox.right - elemBox.left) * (Math.random() * 1.1 - 0.05),
+                elemBox.top + (elemBox.bottom - elemBox.top) * (Math.random() * 1.2 - 0.4)]
+            effect(...coords, "/static/img/icon512.png", 2.5)
+        }
+    }
+
     onclickCallback(value, event) {
         const clicksEl = document.getElementById("clicks");
         clicksEl.innerText = `${value}/${this.needClicks}`;
 
-        clickEffect(event.clientX, event.clientY, "/static/img/icon512.png")
+        effect(event.clientX, event.clientY, "/static/img/icon512.png")
         clickResize(event.target)
     }
 
@@ -464,8 +474,8 @@ class Generator {
             return
         }
         if (data.id) {
+            this.finalRamConfetti()
             this.close();
-            // TODO анимация завершения
             appendRam(data);
             document.getElementById("generate-ram").classList.remove('target');
             openRam(data.id);
@@ -523,9 +533,11 @@ class Generator {
                     <h3 id="wait-clicks" class="text-center"></h3>`;
                     this.targetedClicker = new Clicker(
                         "wait-ram",
-                        function (value) {
+                        function (value, event) {
                             const clicksEl = document.getElementById("wait-clicks");
                             clicksEl.innerText = `${value}`;
+                            effect(event.clientX, event.clientY, "/static/img/icon512.png")
+                            clickResize(event.target)
                         }.bind(this),
                         function () {});
                 }
@@ -600,7 +612,7 @@ class RamPage {
                         "ram-clicker",
                         function (value, event) {
                             document.getElementById("ram-clicked").innerHTML = `${value} тапов`
-                            clickEffect(event.clientX, event.clientY, "/static/img/icon512.png")
+                            effect(event.clientX, event.clientY, "/static/img/icon512.png")
                             clickResize(event.target)
                         },
                         this.sendClicks.bind(this),
