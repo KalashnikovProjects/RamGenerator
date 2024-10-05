@@ -78,7 +78,7 @@ func ValidateClickData(clicks int, lastClicks time.Time) bool {
 		return false
 	}
 
-	if clicks > int(30*timeSub.Seconds()) {
+	if clicks > config.Conf.Clicks.CPSLimit*int(timeSub.Seconds()) {
 		return false
 	}
 

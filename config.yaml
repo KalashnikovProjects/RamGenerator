@@ -18,6 +18,7 @@ prompts:
   base_description_prompt: "Напиши максимально кратное описание барана на этом изображении (не более 6 слов)."
 
 clicks:
+  cps_limit: 30
   first_ram: 100
   daily_rams:
     - 200
