@@ -22,6 +22,7 @@ type Paths struct {
 	Templates string
 	CdnFiles  string
 	Favicon   string
+	Robots    string
 }
 
 type Config struct {
@@ -67,6 +68,7 @@ func InitConfigs() {
 			Templates: fmt.Sprintf("%s/Frontend/templates", rootPath),
 			CdnFiles:  fmt.Sprintf("%s/Frontend/static", rootPath),
 			Favicon:   fmt.Sprintf("%s/Frontend/static/img/icon196.ico", rootPath),
+			Robots:    fmt.Sprintf("%s/Frontend/another/robots.txt", rootPath),
 		},
 	}
 }

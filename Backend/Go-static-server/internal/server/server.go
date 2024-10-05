@@ -88,6 +88,7 @@ func NewStaticServer(Addr string) *http.Server {
 	router.HandleFunc("/login", WriteRenderedPage(Renders.Login))
 
 	router.HandleFunc("/favicon.ico", faviconHandler)
+	router.HandleFunc("/robots.txt", robotsHandler)
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(config.Conf.Paths.CdnFiles))))
 	return &http.Server{
@@ -110,14 +111,14 @@ func ServeServer(ctx context.Context, server *http.Server) error {
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	file, err := os.Open(config.Conf.Paths.Favicon)
 	if err != nil {
-		http.Error(w, "FaviconPath not found", http.StatusNotFound)
+		http.Error(w, "favicon not found", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		http.Error(w, "FaviconPath not found", http.StatusNotFound)
+		http.Error(w, "favicon not found", http.StatusNotFound)
 		return
 	}
 
@@ -125,4 +126,21 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
 
 	http.ServeContent(w, r, config.Conf.Paths.Favicon, fileInfo.ModTime(), file)
+}
+
+func robotsHandler(w http.ResponseWriter, r *http.Request) {
+	file, err := os.Open(config.Conf.Paths.Robots)
+	if err != nil {
+		http.Error(w, "robots.txt path not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		http.Error(w, "robots.txt not found", http.StatusNotFound)
+		return
+	}
+
+	http.ServeContent(w, r, config.Conf.Paths.Robots, fileInfo.ModTime(), file)
 }
