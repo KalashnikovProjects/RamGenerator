@@ -222,7 +222,7 @@ input {
 }
 
 .ram-content {
-    display: table;
+    display: block;
     margin: 0 auto;
 }
 
@@ -305,5 +305,13 @@ input {
 @media (min-width: 768px) {
     .footer-flex {
         justify-content: space-around;
+    }
+}
+
+@media (max-height: 950px) {
+    .ram-image {
+        height: 30vh;
+        width: auto;
+        margin-top: 1.5rem!important;
     }
 }
