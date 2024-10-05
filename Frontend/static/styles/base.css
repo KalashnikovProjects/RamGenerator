@@ -159,7 +159,7 @@ input {
 }
 
 .small-popup.target {
-    z-index: 10000;
+    z-index: 100;
     display: flex;
 }
 

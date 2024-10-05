@@ -2,6 +2,56 @@ let userInfo, userRams, ramGenerator, ramPage;
 
 const notFoundRam = new Error("Ram not found or ot not yours")
 
+let effectsContainer;
+
+
+async function clickResize(elem, scale=0.95, time=300) {
+    elem.style.transform = `scale(${scale + Math.random() * 0.05})`;
+    elem.style.transition = "transform 0.1s"
+    setTimeout(() => {elem.style.transform = ""}, time)
+}
+
+async function clickEffect(x, y, effectImg, endTime=1) {
+    const effectElem = document.createElement('img')
+    effectElem.src = effectImg;
+    effectElem.className = 'floatingEffect';
+    effectElem.style.position = "absolute";
+    effectElem.style.left = `${x + Math.random() * 40 - 20}px`;
+    effectElem.style.top = `${y - 25 + Math.random() * 40 - 20}px`;
+    effectsContainer.appendChild(effectElem);
+
+    const direction = Math.random() < 0.5 ? -1 : 1;
+    const angle = (Math.random() * 20 + 40) * Math.PI / 180;
+
+    // Увеличиваем начальную скорость для большей дальности
+    const initialSpeed = Math.random() * 15 + 30;
+
+    let time = 0;
+    const gravity = 1.2; // Коэффициент гравитации
+    let velocityY = -initialSpeed * Math.sin(angle);
+
+    function animate() {
+        time += 0.016; // Примерно 60 кадров в секунду
+
+        const x = direction * initialSpeed * Math.cos(angle) * time * 3;
+        velocityY += gravity;
+        const y = velocityY * time + 0.5 * gravity * time * time;
+
+        effectElem.style.transform = `translate(${x}px, ${y}px)`;
+
+        if (time >= endTime - 0.5) {
+            effectElem.style.opacity = '0';
+        }
+
+        if (time >= endTime) {
+            effectsContainer.removeChild(effectElem);
+        } else {
+            requestAnimationFrame(animate);
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
 function show404() {
     document.getElementById("user-section").innerHTML = `<div class="text-center" style="margin-top: 32vh">
     <h1 class="m-1 mb-2">Такого пользователя не существует</h1>
@@ -195,12 +245,12 @@ class Clicker {
         this.clicksCount = this.clicksIferror;
     }
 
-    onclick() {
+    onclick(event) {
         this.clicksCount++;
         if (this.clicksCount - this.lastSendCount >= 50) {
             this.sendClicks();
         }
-        this.onclickCallback(this.clicksCount);
+        this.onclickCallback(this.clicksCount, event);
     }
 
     close() {
@@ -218,17 +268,16 @@ class Clicker {
 }
 
 class TargetedClicker extends Clicker {
-    constructor(target, endCallback, clickElemId, onclickCallback, sendClicksCallback) {
-        super(clickElemId, onclickCallback, sendClicksCallback);
+    constructor(target, endCallback, clickElemId, onclickCallback, sendClicksCallback, start=0) {
+        super(clickElemId, onclickCallback, sendClicksCallback, start);
         this.target = target;
         this.endCallback = endCallback;
         this.endCallbacked = false;
     }
 
-    onclick() {
-        super.onclick();
+    onclick(event) {
         if (this.clicksCount < this.target) {
-            super.onclick();
+            super.onclick(event);
         } else if (!this.endCallbacked) {
             this.endCallbacked = true
             this.endCallback()
@@ -390,9 +439,12 @@ class Generator {
         // this.targetedClicker = undefined;
     }
 
-    changeClicksValue(value) {
+    onclickCallback(value, event) {
         const clicksEl = document.getElementById("clicks");
         clicksEl.innerText = `${value}/${this.needClicks}`;
+
+        clickEffect(event.clientX, event.clientY, "/static/img/icon512.png")
+        clickResize(event.target)
     }
 
     sendClicks(value) {
@@ -452,7 +504,7 @@ class Generator {
                     this.needClicks,
                     this.endClicker.bind(this),
                     "clicker",
-                    this.changeClicksValue.bind(this),
+                    this.onclickCallback.bind(this),
                     this.sendClicks.bind(this));
                 break;
             case "image generated":
@@ -546,7 +598,11 @@ class RamPage {
                                         </button>`;
                     this.clicker = new Clicker(
                         "ram-clicker",
-                        function (value) { document.getElementById("ram-clicked").innerHTML = `${value} тапов`},
+                        function (value, event) {
+                            document.getElementById("ram-clicked").innerHTML = `${value} тапов`
+                            clickEffect(event.clientX, event.clientY, "/static/img/icon512.png")
+                            clickResize(event.target)
+                        },
                         this.sendClicks.bind(this),
                         this.ram.taps,
                     );
