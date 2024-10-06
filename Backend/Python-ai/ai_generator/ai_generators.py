@@ -1,3 +1,5 @@
+from typing_extensions import TypedDict
+
 import google.generativeai as genai
 
 from retry import retry
@@ -13,19 +15,31 @@ import requests
 class GeminiCensorshipError(Exception):
     pass
 
+
 class GeminiBugError(Exception):
     pass
+
 
 class ImageCensorshipError(Exception):
     pass
 
+
 class ImageGenerationUnavailableError(Exception):
     pass
+
+
+class NoRamError(Exception):
+    pass
+
+
+# Ключи на русском для того, чтобы gemini ответил на русском
+Response = TypedDict('Response', {'есть баран': bool, 'краткое описание': str}, total=True)
+
 
 class PromptGenerator:
     def __init__(self, api_key: str,
                  system_instructions: str,
-                 response_len: int,
+                 max_output_tokens: int = None,
                  model_name: str = config.GEMINI.MODEL,
                  safety_settings=None):
 
@@ -35,15 +49,17 @@ class PromptGenerator:
             model_name=model_name,
             safety_settings=safety_settings,
             system_instruction=system_instructions,
-            generation_config=genai.GenerationConfig(candidate_count=1, max_output_tokens=response_len // 3)
+            generation_config=genai.GenerationConfig(candidate_count=1, max_output_tokens=max_output_tokens)
         )
 
     @retry(tries=3, delay=2)
     @rate_limiters.api_rate_limiter_with_que(rate_limit=config.GEMINI.RATE_LIMIT)
-    def generate(self, text: str, images: list[dict[str, bytes | str]] = None) -> str:
+    def generate(self, text: str, images: list[dict[str, bytes | str]] = None, generation_config=None) -> str:
 
         inp = [text, *images] if images else text
-        res = self.model.generate_content(inp)
+
+        res = self.model.generate_content(inp, generation_config=generation_config)
+
         if not res.parts:
             if res.candidates[0].finish_reason == 3:
                 raise GeminiCensorshipError
