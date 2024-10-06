@@ -33,7 +33,11 @@ class NoRamError(Exception):
 
 
 # Ключи на русском для того, чтобы gemini ответил на русском
-Response = TypedDict('Response', {'есть баран': bool, 'краткое описание': str}, total=True)
+DescriptionResponse = TypedDict('DescriptionResponse', {'есть баран': bool, 'краткое описание': str}, total=True)
+
+
+# Ключи на русском для того, чтобы gemini ответил на русском
+PromptResponse = TypedDict('PromptResponse', {'есть мат': bool, 'запрос': str}, total=True)
 
 
 class PromptGenerator:
@@ -55,7 +59,6 @@ class PromptGenerator:
     @retry(tries=3, delay=2)
     @rate_limiters.api_rate_limiter_with_que(rate_limit=config.GEMINI.RATE_LIMIT)
     def generate(self, text: str, images: list[dict[str, bytes | str]] = None, generation_config=None) -> str:
-
         inp = [text, *images] if images else text
 
         res = self.model.generate_content(inp, generation_config=generation_config)

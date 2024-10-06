@@ -42,10 +42,14 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.SAFETY_SETTINGS)
 
-        prompt = f"Напиши промпт для генерации изображения барана. \nЗапрос пользователя: {request.user_prompt}"
+        prompt = f"Напиши промпт для изображения барана. Запрос пользователя: {request.user_prompt}"
         try:
-            res = generator.generate(prompt)
-            return ram_generator_pb2.RamImagePrompt(prompt=res)
+            res = generator.generate(prompt, [], generation_config={"response_mime_type": "application/json",
+                                                                    "response_schema": ai_generators.PromptResponse})
+            result = json.loads(res)
+            if result.get("есть мат", False):
+                raise ai_generators.GeminiCensorshipError
+            return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt contains illegal content")
         except Exception as e:
@@ -62,10 +66,14 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.SAFETY_SETTINGS)
         rams = ';'.join(request.ram_descriptions)
-        prompt = f"Напиши промпт для генерации изображения барана. \nЗапрос пользователя: {request.user_prompt}\nОписания остальных баранов пользователя: \n{rams}"
+        prompt = f"Напиши промпт для изображения барана. Запрос пользователя: {request.user_prompt}\nОписания остальных баранов пользователя: \n{rams}"
         try:
-            res = generator.generate(prompt, [])
-            return ram_generator_pb2.RamImagePrompt(prompt=res)
+            res = generator.generate(prompt, [], generation_config={"response_mime_type": "application/json",
+                                                                    "response_schema": ai_generators.PromptResponse})
+            result = json.loads(res)
+            if result.get("есть мат", False):
+                raise ai_generators.GeminiCensorshipError
+            return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt or descriptions contains illegal content")
         except Exception as e:
@@ -79,7 +87,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         api = ai_generators.ImageGenerator(config.KANDINSKY.ENDPOINT, config.KANDINSKY.KEY,
                                            config.KANDINSKY.SECRET_KEY)
         model_id = api.get_model()
-        uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, model_id, config.KANDINSKY.SIDE, config.KANDINSKY.SIDE)
+        uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, model_id,
+                            config.KANDINSKY.SIDE, config.KANDINSKY.SIDE)
 
         try:
             image = api.check_generation(uuid)
@@ -116,7 +125,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             res = generator.generate("Напиши ОЧЕНЬ короткое описание для изображения барана, до 6 слов", [{
                 "mime_type": mimetype,
                 "data": image
-            }], generation_config={"response_mime_type": "application/json", "response_schema": ai_generators.Response})
+            }], generation_config={"response_mime_type": "application/json",
+                                   "response_schema": ai_generators.DescriptionResponse})
             result = json.loads(res)
             if not result.get("есть баран", False):
                 raise ai_generators.NoRamError
