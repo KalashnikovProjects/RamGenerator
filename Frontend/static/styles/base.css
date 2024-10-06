@@ -181,6 +181,8 @@ input {
     position: fixed;
     height: 60vh;
     width: 30vw;
+    height: 60dvh;
+    width: 30dvw;
     background-image: url("../img/background.jpg");
     background-size: cover;
     border-radius: 1.5rem;
@@ -190,6 +192,8 @@ input {
     .popup-menu {
         top: 15vh;
         height: 85vh;
+        top: 15dvh;
+        height: 85dvh;
         width: 95vw;
     }
 }
