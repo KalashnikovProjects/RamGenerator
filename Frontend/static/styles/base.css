@@ -178,7 +178,7 @@ input {
     flex-direction: column;
     flex-wrap: nowrap;
     padding: 1.5rem;
-    position: relative;
+    position: fixed;
     height: 60vh;
     width: 30vw;
     background-image: url("../img/background.jpg");
@@ -188,8 +188,8 @@ input {
 
 @media (max-width: 1399px) {
     .popup-menu {
-        top: 10vh;
-        height: 90vh;
+        top: 15vh;
+        height: 85vh;
         width: 95vw;
     }
 }
