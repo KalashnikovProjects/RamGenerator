@@ -130,12 +130,12 @@ async function displayUserInfo() {
         res += `<div class="user-buttons-normal">
         <button class="button-user left-button-user row" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать барана</button>
         <button class="button-user left-button-user row " disabled onclick="location.href='/trade'">Обменять баранов</button>
-        <button class="button-user left-button-user row last-button-user" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');">Настройки аккаунта</button>
+        <button class="button-user left-button-user row last-button-user" onclick="updateHash('#settings');hideScroll();document.getElementById('settings').classList.add('target');">Настройки аккаунта</button>
     </div>
     <div class="user-buttons-mobile">
         <button class="button-user left-button-user-mobile button-create-mobile" onclick="updateHash('#generate-ram'); ramGenerator = new Generator()">Сгенерировать<img src="/static/img/generate-ram.svg" class="mobile-userinfo-icon" alt="барана"></button>
         <button class="button-user left-button-user-mobile" disabled onclick="location.href='/trade'"><img src="/static/img/trade.svg" class="mobile-userinfo-icon" alt="Трейды"></button>
-        <button class="button-user left-button-user-mobile" onclick="updateHash('#settings');document.getElementById('settings').classList.add('target');"><img src="/static/img/settings.svg" class="mobile-userinfo-icon" alt="Настройки"></button>
+        <button class="button-user left-button-user-mobile" onclick="updateHash('#settings');hideScroll();document.getElementById('settings').classList.add('target');"><img src="/static/img/settings.svg" class="mobile-userinfo-icon" alt="Настройки"></button>
     </div>`;
     }
     document.getElementById("user-card").innerHTML = res;
@@ -293,6 +293,7 @@ class Generator {
 
     async initialize() {
         document.getElementById("generate-ram").classList.add('target');
+        hideScroll()
         document.querySelector("#generate-ram .popup-menu").innerHTML = `
              <h4 id="generation-title" class="text-center">Генерация барана</h2>
              <div id="generation-content" class="text-center">
@@ -580,6 +581,7 @@ async function getRam(username, id) {
 class RamPage {
     constructor(id) {
         document.getElementById("ram").classList.add('target');
+        hideScroll()
         let elem =  document.querySelector("#ram .popup-menu");
         elem.innerHTML = `
              <h4 id="ram-description" class="ram-description">Загрузка барана...</h2>
@@ -887,6 +889,7 @@ async function checkHash() {
 
 function closePopup() {
     try {
+        showScroll()
         const url = new URL(location);
         if (ramGenerator) {
             updateHash('')
