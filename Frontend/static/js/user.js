@@ -363,9 +363,11 @@ class Generator {
                         try {
                             this.targetedClicker.rollbackErrorClicks();
                         } catch (e) {}
-                        // TODO сообщение об ошибке
                         break;
                     case "user prompt or rams descriptions contains illegal content":
+                        error = `Не получилось сгенерировать барана по такому запросу, попробуйте ещё раз`;
+                        break;
+                    case "no ram on final image":
                         error = `Не получилось сгенерировать барана по такому запросу, попробуйте ещё раз`;
                         break;
                     default:
@@ -387,6 +389,8 @@ class Generator {
                         error = `Сервис генерации изображений баранов сейчас недоступен, попробуйте позже`;
                         break;
                     case "image description generating error":
+                        error = `Произошла ошибка при описании барана, попробуйте позже`;
+                        break;
                     case "image uploading error":
                     case "prompt generating error":
                         error = `Сервис, необходимый для генерации баранов сейчас недоступен, попробуйте позже`;
@@ -660,7 +664,6 @@ class RamPage {
                         try {
                             this.targetedClicker.rollbackErrorClicks();
                         } catch (e) {}
-                        // TODO сообщение об ошибке
                         break;
                     default:
                         console.log("Unknown error", data.code, data.error);
