@@ -1,3 +1,4 @@
+import json
 import logging
 import mimetypes
 from concurrent import futures
@@ -37,11 +38,11 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_START_PROMPT,
-                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
+                                                  max_output_tokens=config.GEMINI.MAX_IMAGE_PROMPT_TOKENS,
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.SAFETY_SETTINGS)
 
-        prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}"
+        prompt = f"Напиши промпт для генерации изображения барана. \nЗапрос пользователя: {request.user_prompt}"
         try:
             res = generator.generate(prompt)
             return ram_generator_pb2.RamImagePrompt(prompt=res)
@@ -57,11 +58,11 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
 
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT,
-                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
+                                                  max_output_tokens=config.GEMINI.MAX_IMAGE_PROMPT_TOKENS,
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.SAFETY_SETTINGS)
-        rams = '\n'.join(request.ram_descriptions)
-        prompt = f"Напиши промпт для генерации изображения нового барана пользователя. \nЗапрос пользователя: {request.user_prompt}\nОписание баранов пользователя: \n{rams}"
+        rams = ';'.join(request.ram_descriptions)
+        prompt = f"Напиши промпт для генерации изображения барана. \nЗапрос пользователя: {request.user_prompt}\nОписания остальных баранов пользователя: \n{rams}"
         try:
             res = generator.generate(prompt, [])
             return ram_generator_pb2.RamImagePrompt(prompt=res)
@@ -85,8 +86,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             return ram_generator_pb2.RamImage(image=image)
         except ai_generators.ImageCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"User prompt contains illegal content")
-        except ai_generators.ImageGenerationUnavailableError:
-            context.abort(grpc.StatusCode.INTERNAL, f"Image generation service unavailable")
+        except ai_generators.ImageGenerationUnavailableError as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Image generation service unavailable {e}")
         except ai_generators.ImageGenerationTimeoutError:
             context.abort(grpc.StatusCode.DEADLINE_EXCEEDED, f"The waiting time for image generation has been exceeded")
         except Exception as e:
@@ -99,10 +100,9 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
     def GenerateDescription(request, context, **kwargs):
         logging.info(f"Generating description")
 
-
         generator = ai_generators.PromptGenerator(api_key=config.GEMINI.API_KEY,
                                                   system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT,
-                                                  response_len=config.GEMINI.MAX_RESPONSE_LENGTH,
+                                                  max_output_tokens=config.GEMINI.MAX_DESCRIPTION_TOKENS,
                                                   model_name=config.GEMINI.MODEL,
                                                   safety_settings=config.GEMINI.SAFETY_SETTINGS)
         try:
@@ -113,14 +113,18 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             except Exception as e:
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"Image downloading error: {str(e)}")
                 return
-            res = generator.generate("Напиши описание для изображения барана", [{
+            res = generator.generate("Напиши ОЧЕНЬ короткое описание для изображения барана, до 6 слов", [{
                 "mime_type": mimetype,
                 "data": image
-            }])
-
-            return ram_generator_pb2.RamDescription(description=res)
+            }], generation_config={"response_mime_type": "application/json", "response_schema": ai_generators.Response})
+            result = json.loads(res)
+            if not result.get("есть баран", False):
+                raise ai_generators.NoRamError
+            return ram_generator_pb2.RamDescription(description=result["краткое описание"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")
+        except ai_generators.NoRamError:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Image does not contain ram")
         except Exception as e:
             logging.exception("Generate description error", e)
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error: {str(e)}")
