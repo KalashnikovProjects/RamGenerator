@@ -7,6 +7,7 @@
 body {
     background-image: url("../img/background.jpg");
     background-size: cover;
+    scrollbar-gutter: stable both-edges;
 }
 
 img {

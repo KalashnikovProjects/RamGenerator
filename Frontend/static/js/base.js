@@ -1,9 +1,64 @@
 "use strict";
 
 let user;
+const isTouchDevice =
+    (('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (navigator.msMaxTouchPoints > 0));
 
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
+}
+let scrollTop = 0;
+
+function hideScroll() {
+    if (!isTouchDevice) {
+        return
+    }
+    document.body.classList.add('no-scroll');
+    scrollTop = window.scrollY;
+
+    Object.assign(document.body.style, {
+        position: 'fixed',
+        width: `calc(100% - ${getScrollbarSize()}px)`,
+        top: `${-scrollTop}px`
+    });
+}
+
+function showScroll() {
+    if (!isTouchDevice) {
+        return
+    }
+    document.body.classList.remove('no-scroll');
+
+    Object.assign(document.body.style, {
+        position: '',
+        width: '',
+        top: ''
+    });
+
+    window.scrollTo(0, scrollTop);
+}
+
+function getScrollbarSize() {
+    const outer = document.createElement('div');
+    Object.assign(outer.style, {
+        visibility: 'hidden',
+        width: '100px',
+        msOverflowStyle: 'scrollbar',
+        overflow: 'scroll'
+    });
+
+    document.body.appendChild(outer);
+
+    const inner = document.createElement('div');
+    inner.style.width = '100%';
+    outer.appendChild(inner);
+
+    const scrollbarSize = outer.offsetWidth - inner.offsetWidth;
+    outer.remove();
+
+    return scrollbarSize;
 }
 
 async function loadUser() {

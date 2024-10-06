@@ -12,6 +12,7 @@ async function timeToTapHref() {
 }
 
 async function indexRam(ram) {
+    hideScroll()
     document.getElementById('ram').classList.add('target')
     let elem =  document.querySelector("#ram .popup-menu");
     let style =  `
@@ -38,6 +39,7 @@ async function indexRam(ram) {
 }
 
 function closePopup() {
+    showScroll()
     document.querySelector("#ram .popup-menu").innerHTML = "";
     document.getElementById('ram').classList.remove('target')
 
