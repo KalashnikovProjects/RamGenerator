@@ -6,14 +6,6 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/js/sw.js')
-        .then(() => navigator.serviceWorker.ready.then((worker) => {
-            worker.sync.register('syncdata');
-        }))
-        .catch((err) => console.log(err));
-}
-
 async function loadUser() {
     try {
         const token = getCookie("token");
