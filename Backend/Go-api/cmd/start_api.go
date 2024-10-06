@@ -9,7 +9,7 @@ import (
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/database"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/entities"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/logs"
-	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/ram_image_generator"
+	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/ram_generator"
 	pb "github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/proto_generated"
 	"log"
 	"log/slog"
@@ -74,7 +74,7 @@ func main() {
 	ctx := context.Background()
 	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Host, config.Conf.Database.DBName)
 	db := database.CreateDBConnectionContext(ctx, pgConnectionString)
-	gRPCConn := ram_image_generator.CreateGRPCConnection()
+	gRPCConn := ram_generator.CreateGRPCConnection()
 
 	server := api.NewRamGeneratorServer(ctx, fmt.Sprintf(":%d", config.Conf.Ports.Api), db, gRPCConn)
 	err := api.ServeServer(ctx, server)
