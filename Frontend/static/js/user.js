@@ -280,6 +280,7 @@ class TargetedClicker extends Clicker {
             super.onclick(event);
         } else if (!this.endCallbacked) {
             this.endCallbacked = true
+            this.sendClicks(true);
             this.endCallback()
         }
     }
@@ -366,7 +367,7 @@ class Generator {
                         } catch (e) {}
                         break;
                     case "user prompt or rams descriptions contains illegal content":
-                        error = `Не получилось сгенерировать барана по такому запросу, попробуйте ещё раз`;
+                        error = `Запрос подвергся цензуре нейросетью, попробуйте ещё раз`;
                         break;
                     case "no ram on final image":
                         error = `Не получилось сгенерировать барана по такому запросу, попробуйте ещё раз`;
@@ -386,15 +387,19 @@ class Generator {
                         error = `Сервис генерации изображений баранов не отвечает, попробуйте позже`;
                         break;
                     case "image generating error":
+                        error = `Произошла ошибка при генерации изображения барана, попробуйте ещё раз`;
+                        break;
                     case "image generation service unavailable":
                         error = `Сервис генерации изображений баранов сейчас недоступен, попробуйте позже`;
                         break;
                     case "image description generating error":
-                        error = `Произошла ошибка при описании барана, попробуйте позже`;
+                        error = `Произошла ошибка при описании барана, попробуйте ещё раз`;
                         break;
                     case "image uploading error":
+                        error = `Произошла ошибка при загрузке баран, попробуйте ещё раз`;
+                        break;
                     case "prompt generating error":
-                        error = `Сервис, необходимый для генерации баранов сейчас недоступен, попробуйте позже`;
+                        error = `Произошла ошибка при генерации промпта для барана, попробуйте ещё раз`;
                         break;
                     default:
                         error = "Произошла неизвестная ошибка на стороне сервера.";
