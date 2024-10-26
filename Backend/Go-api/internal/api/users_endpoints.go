@@ -46,8 +46,7 @@ func (h *Handlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PutPatchUser также выполняет функции PutUser
-// Рекомендуется использовать Patch
+// PutPatchUser also run for Put method, recommended Patch method
 func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params := mux.Vars(r)
@@ -112,7 +111,7 @@ func (h *Handlers) PutPatchUser(w http.ResponseWriter, r *http.Request) {
 		user.Password = ""
 	}
 
-	// Неизменяемые поля
+	// Immutable
 	user.Id = 0
 	user.DailyRamGenerationTime = 0
 	user.RamsGeneratedLastDay = 0

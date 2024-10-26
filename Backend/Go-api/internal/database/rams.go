@@ -97,7 +97,6 @@ func GetRamsByUserIdContext(ctx context.Context, db SQLQueryExec, userId int) ([
 	return res, nil
 }
 
-// CreateRamContext создаёт барана и возвращает id
 func CreateRamContext(ctx context.Context, db SQLQueryExec, ram entities.Ram) (int, error) {
 	var id int
 	err := db.QueryRowContext(ctx, "INSERT INTO rams (taps, description, image_url, user_id) VALUES ($1, $2, $3, $4) RETURNING id",

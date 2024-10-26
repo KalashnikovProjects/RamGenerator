@@ -11,7 +11,7 @@ import (
 	"github.com/rivo/uniseg"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure" // Для упрощения не будем использовать SSL/TLS аутентификация
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"io"

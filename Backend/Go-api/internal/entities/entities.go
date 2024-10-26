@@ -13,16 +13,16 @@ type IdResponse struct {
 
 type User struct {
 	Id           int    `json:"id"`
-	Username     string `json:"username"`           // Максимум 24 символа
-	Password     string `json:"password,omitempty"` // В базе данных PasswordHash, Password только в запросах регистрации / входа, put user, patch user
+	Username     string `json:"username"`           // Max 24 symbols
+	Password     string `json:"password,omitempty"` // In database saving only PasswordHash, Password using only in login, registration and put user, patch user request json's
 	PasswordHash string `json:"-"`
 
-	DailyRamGenerationTime int `json:"daily_ram_generation_time"` // Время генерации первого барана за день, UNIX формат, изменяется только при ws/create-ram
-	RamsGeneratedLastDay   int `json:"rams_generated_last_day"`   // Изменяется только при ws/generate-ram
-	ClickersBlockedUntil   int `json:"-"`                         // Нельзя иметь 2 ws/generate-ram на аккаунт одновременно
+	DailyRamGenerationTime int `json:"daily_ram_generation_time"` // Time of generating first daily ram, UNIX format, updating only with ws/generate-ram
+	RamsGeneratedLastDay   int `json:"rams_generated_last_day"`   // Updating only with ws/generate-ram
+	ClickersBlockedUntil   int `json:"-"`                         // User cant run 2 ws/generate-ram per account parallel
 
 	AvatarRamId int    `json:"avatar_ram_id"`
-	AvatarBox   *Box   `json:"avatar_box,omitempty"` // 4 координаты, обрезающие аватар, координаты от 0 до 1
+	AvatarBox   *Box   `json:"avatar_box,omitempty"` // coordinates in format [[Left, Up], [Right, Bottom]] from 0 to 1
 	AvatarUrl   string `json:"avatar_url,omitempty"`
 }
 
@@ -35,11 +35,11 @@ func (u *User) CalculateRamsGeneratedLastDay(timeBetweenDaily int) int {
 
 type Ram struct {
 	Id          int    `json:"id"`
-	Taps        int    `json:"taps"`        // Изменяется только через ws/clicker
-	Description string `json:"description"` // Оно же промпт для нейросети
+	Taps        int    `json:"taps"`        // Changing only with ws/clicker
+	Description string `json:"description"` // Generating after ram image by ai
 	ImageUrl    string `json:"image_url"`
-	User        *User  `json:"user,omitempty"`
-	UserId      int    `json:"user_id"` // Изменяется только через трейды
+	User        *User  `json:"user,omitempty"` // Only returning, not stores in db or input
+	UserId      int    `json:"user_id"`
 }
 
 type Box [][]float64

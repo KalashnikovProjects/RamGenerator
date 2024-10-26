@@ -38,10 +38,7 @@ func NewRamGeneratorServer(ctx context.Context, Addr string, db database.SQLTXQu
 
 	router.Handle("/api/users/{username}/rams/{id}/ws/clicker", tollbooth.LimitHandler(tollbooth.NewLimiter(3, nil), http.HandlerFunc(handlers.WebsocketClicker))).Methods("GET", "POST")
 
-	// router.Handle("/api/users/{username}/rams/{id}", AuthorizationMiddleware(http.HandlerFunc(handlers.DeleteRam))).Methods("DELETE")
-	// router.Handle("/api/users/{username}/rams/{id}", AuthorizationMiddleware(http.HandlerFunc(handlers.PutPatchRam))).Methods("PUT", "PATCH")
-
-	//TODO:
+	// Maybe made in future:
 	// router.HandleFunc("/api/ws/trade", handlers.TradeWebsocket)
 
 	slog.Info("API server created", slog.String("addr", Addr))

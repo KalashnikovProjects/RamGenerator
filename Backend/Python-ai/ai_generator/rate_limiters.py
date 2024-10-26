@@ -24,6 +24,17 @@ def _background_rate_limit_que_process(rate_que, last_request_time: list[int], r
 
 def api_rate_limiter_with_que(rate_limit: int, timeout: int = 200, rate_limit_time: int = 60):
     """
+    EN
+    Decorator, set rate limit with que for function
+
+    Decorator Arguments:
+    timeout - que timeout
+    rate_limit - limit of function calls,
+    rate_limit_time=60 - the limit for what time
+
+    Tasks for which there was not enough limit are postponed to the queue, queue elements are
+    threading.Event(), events are served in a separate thread, the wrapper function waits for the event and starts.
+    РУС
     Декоратор, устанавливает для функции рейт лимит с очередью
 
     Аргументы декоратора:
@@ -48,7 +59,7 @@ def api_rate_limiter_with_que(rate_limit: int, timeout: int = 200, rate_limit_ti
                 rate_que.put(event)
                 is_set = event.wait(timeout=timeout)
                 if not is_set:
-                    raise QueTimoutError("Таймаут очереди запросов")
+                    raise QueTimoutError("Que Timeout")
             last_request_time[last_req_time_index] = time.time()
             res = func(*args, **kwargs)
             return res

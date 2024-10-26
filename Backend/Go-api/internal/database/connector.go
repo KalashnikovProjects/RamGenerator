@@ -33,16 +33,16 @@ type SQLTXQueryExec interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
-// GenerateQueryAndArgsForUpdate генерирует строку запроса и аргументы для вставки
-// table - название таблицы
-// fields - хэш-мапа в формате поля в бд и значения для текущего запроса (если nil или default value оно игнорируется), пример:
+// GenerateQueryAndArgsForUpdate generate query string and arguments for paste
+// table - table name
+// fields - hash-map "field name": field value:
 //
 //	 map[string]any{
 //			"username":           user.Username,
 //			"password_hash":      user.PasswordHash}
 //
-// condition - условие типа id=$1
-// conditionValues - список значений для условия в порядке из условия.
+// condition - condition like id=$1
+// conditionValues - values for conditions
 func GenerateQueryAndArgsForUpdate(table string, fields map[string]any, condition string, conditionValues ...any) (string, []any) {
 	var updates []string
 	var args []any

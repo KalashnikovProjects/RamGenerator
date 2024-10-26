@@ -255,8 +255,6 @@ func (h *Handlers) WebsocketClicker(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.Conn, params map[string]string) {
-	//TODO: defer Control Message
-
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
 	ctx = context.WithValue(ctx, "websocketSendMutex", &sync.Mutex{})
 	defer cancel()
@@ -339,8 +337,6 @@ func (h *Handlers) WebsocketGenerateRam(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websocket.Conn, params map[string]string) {
-	//TODO: defer Control Message
-
 	defer ws.Close()
 	ctx = context.WithValue(ctx, "websocketSendMutex", &sync.Mutex{})
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
