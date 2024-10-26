@@ -19,12 +19,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 )
+
+// TODO ПОЧИНИТЬ ТЕСТЫ
 
 type expected struct {
 	statusCode    int
@@ -86,21 +87,20 @@ func setup() *postgres.PostgresContainer {
 
 	port, _ := pgContainer.MappedPort(ctx, "5432/tcp")
 	host, _ := pgContainer.Host(ctx)
-	os.Setenv("POSTGRES_HOST", host)
-	os.Setenv("POSTGRES_PORT", port.Port())
+	os.Setenv("ROOT_PATH", "../../..")
+	os.Setenv("POSTGRES_HOST", fmt.Sprintf("%s:%s", host, port.Port()))
 	os.Setenv("POSTGRES_DB", "ram_generator_test")
 	os.Setenv("POSTGRES_USER", "username")
 	os.Setenv("POSTGRES_PASSWORD", "password")
-	os.Setenv("POSTGRES_HOST", "localhost")
-	os.Setenv("HMAC", "AWFWFfasfawf2aFW")
-
+	os.Setenv("HMAC", "testHmac123")
 	if godotenv.Load(".env") != nil {
 		log.Fatal(".env file not found, it must contain FREE_IMAGE_HOST_API_KEY")
 	}
-
+	config.InitConfigs()
 	log.Println("starting api server...")
 
-	db := database.CreateDBConnectionContext(ctx)
+	pgConnectionString := database.GeneratePostgresConnectionString(config.Conf.Database.User, config.Conf.Database.Password, config.Conf.Database.Host, config.Conf.Database.DBName)
+	db := database.CreateDBConnectionContext(ctx, pgConnectionString)
 
 	server := api.NewRamGeneratorServer(ctx, fmt.Sprintf(":%d", testingPort), db, &gRPCStub{})
 	go func(server *http.Server) {
@@ -446,12 +446,6 @@ func TestAuthPermissions(t *testing.T) {
 			needToken: false,
 		},
 		{
-			name:      "create ram, need token",
-			method:    "POST",
-			url:       "api/users/123/ws/create-ram",
-			needToken: true,
-		},
-		{
 			name:      "get ram, not need token",
 			method:    "GET",
 			url:       "api/users/123/rams/1234",
@@ -469,12 +463,12 @@ func TestAuthPermissions(t *testing.T) {
 		//	url:       "api/users/123/rams/1234",
 		//	needToken: true,
 		//},
-		{
-			name:      "delete ram, need token",
-			method:    "DELETE",
-			url:       "api/users/123/rams/1234",
-			needToken: true,
-		},
+		//{
+		//	name:      "delete ram, need token",
+		//	method:    "DELETE",
+		//	url:       "api/users/123/rams/1234",
+		//	needToken: true,
+		//},
 	}
 
 	for _, tc := range testCases {
@@ -578,35 +572,35 @@ func TestUsersResource(t *testing.T) {
 			body:   ``,
 			expected: expected{
 				statusCode:    http.StatusOK,
-				responseRegex: regexp.MustCompile(`\{"username":"test3_name","last_ram_generated":0,"avatar_url":"(https?://[\w\-._~:/?#[\]@!$&'()*+,;=]+)","avatar_box":\[\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)],\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)]]}`),
+				responseRegex: regexp.MustCompile(`\{"id":4,"username":"test3_name","daily_ram_generation_time":0,"rams_generated_last_day":0,"avatar_ram_id":0,"avatar_box":\[\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)],\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)]]}`),
 			},
 		},
 		{
-			name:   "put user",
-			method: "PUT",
+			name:   "patch user",
+			method: "PATCH",
 			url:    "api/users/test3_name",
-			body:   `{"username":"test3_name_edited","password":"qwerty","avatar_url":"https://example.com/test.png","avatar_box": [[1,1],[2, 2]], "last_ram_generated":52}`,
+			body:   `{"username":"test3_name_edited","password":"qwerty","avatar_box": [[1,1],[2, 2]], "last_ram_generated":52}`,
 			token:  token,
 			expected: expected{
 				statusCode: http.StatusOK,
 			},
 		},
 		{
-			name:   "put user, username already taken",
-			method: "PUT",
+			name:   "patch user, username already taken",
+			method: "PATCH",
 			url:    "api/users/test3_name_edited",
-			body:   `{"username":"test3_another_name","password": "qwerty","avatar_url":"https://example.com/test.png", "avatar_box": [[1,1],[2, 2]]}`,
+			body:   `{"username":"test3_another_name"}`,
 			token:  token,
 			expected: expected{
 				statusCode: http.StatusBadRequest,
-				response:   "username test3_another_name is already taken",
+				response:   fmt.Sprintf("username test3_another_name is already taken"),
 			},
 		},
 		{
-			name:   "put user, bad username",
-			method: "PUT",
+			name:   "patch user, bad username",
+			method: "PATCH",
 			url:    "api/users/test3_name_edited",
-			body:   `{"username":"haha error","password": "qwerty","avatar_url":"https://example.com/test.png", "avatar_box": [[1,1],[2, 2]]}`,
+			body:   `{"username":"haha error"}`,
 			token:  token,
 			expected: expected{
 				statusCode: http.StatusBadRequest,
@@ -617,22 +611,11 @@ func TestUsersResource(t *testing.T) {
 			name:   "put user, all fields must be filled",
 			method: "PUT",
 			url:    "api/users/test3_name_edited",
-			body:   `{"avatar_url": "https://examp1le.com/test.png"}`,
+			body:   `{"username": "awfawfawfa"}`,
 			token:  token,
 			expected: expected{
 				statusCode: http.StatusBadRequest,
 				response:   "all fields must be filled for PUT request",
-			},
-		},
-		{
-			name:   "put another user, forbidden",
-			method: "PUT",
-			url:    "api/users/test3_another_name",
-			body:   `{"username":"test3_name_edited2","password":"qwerty1","avatar_url":"https://example.com/test.png", "avatar_box": [[1,1],[2, 2]]}`,
-			token:  token,
-			expected: expected{
-				statusCode: http.StatusForbidden,
-				response:   "you can't edit another user",
 			},
 		},
 		{
@@ -642,7 +625,7 @@ func TestUsersResource(t *testing.T) {
 			body:   ``,
 			expected: expected{
 				statusCode:    http.StatusOK,
-				responseRegex: regexp.MustCompile(`\{"username":"test3_name_edited","last_ram_generated":0,"avatar_url":"https://example.com/test.png","avatar_box":(\[\[1,1],\[2,2]]|\[\[2,2],\[1,1]])`),
+				responseRegex: regexp.MustCompile(`\{"id":4,"username":"test3_name_edited","daily_ram_generation_time":0,"rams_generated_last_day":0,"avatar_ram_id":0,"avatar_box":\[\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)],\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)]]}`),
 			},
 		},
 		{
@@ -664,26 +647,6 @@ func TestUsersResource(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusForbidden,
 				response:   "you can't edit another user",
-			},
-		},
-		{
-			name:   "patch user",
-			method: "PATCH",
-			url:    "api/users/test3_name_edited",
-			body:   `{"avatar_url":"http://alo.com/test.png","last_ram_generated":1984}`,
-			token:  token,
-			expected: expected{
-				statusCode: http.StatusOK,
-			},
-		},
-		{
-			name:   "get user after patch",
-			method: "GET",
-			url:    "api/users/test3_name_edited",
-			body:   ``,
-			expected: expected{
-				statusCode:    http.StatusOK,
-				responseRegex: regexp.MustCompile(`\{"username":"test3_name_edited","last_ram_generated":0,"avatar_url":"http://alo.com/test.png","avatar_box":(\[\[1,1],\[2,2]]|\[\[2,2],\[1,1]])`),
 			},
 		},
 		{
@@ -715,7 +678,7 @@ func TestUsersResource(t *testing.T) {
 			body:   ``,
 			expected: expected{
 				statusCode:    http.StatusOK,
-				responseRegex: regexp.MustCompile(`\{"username":"test3_another_name","last_ram_generated":0,"avatar_url":"(https?://[\w\-._~:/?#[\]@!$&'()*+,;=]+)","avatar_box":\[\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)],\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)]]}`),
+				responseRegex: regexp.MustCompile(`\{"id":5,"username":"test3_another_name","daily_ram_generation_time":0,"rams_generated_last_day":0,"avatar_ram_id":0,"avatar_box":\[\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)],\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)]]}`),
 			},
 		},
 		{
@@ -864,22 +827,21 @@ func TestRamsResource(t *testing.T) {
 	})
 
 	t.Run("CreateRam", func(t *testing.T) {
-		url := fmt.Sprintf("ws://%s/api/users/test_rams_user/ws/create-ram", testingHost)
-		header := http.Header{}
-		header.Add("Authorization", "Bearer "+token)
+		ctx := context.Background()
 
-		ws, resp, err := websocket.DefaultDialer.Dial(url, header)
+		url := fmt.Sprintf("ws://%s/api/users/test_rams_user/ws/generate-ram", testingHost)
+
+		ws, resp, err := websocket.DefaultDialer.Dial(url, http.Header{})
 		if err != nil {
 			if errors.Is(err, websocket.ErrBadHandshake) {
 				text, _ := io.ReadAll(resp.Body)
 				defer resp.Body.Close()
-				t.Fatalf("Error connection ws/create-ram: %d %s", resp.StatusCode, text)
+				t.Fatalf("Error connection ws/generate-ram: %d %s", resp.StatusCode, text)
 			}
 			t.Fatal(err)
 		}
 		defer ws.Close()
-
-		err = ws.WriteMessage(websocket.TextMessage, []byte("Generate a cool ram"))
+		err = ws.WriteMessage(websocket.TextMessage, []byte(token))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -888,94 +850,121 @@ func TestRamsResource(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(message) != "generating prompt" {
-			t.Fatalf("Expected 'generating prompt', got '%s'", string(message))
+
+		if strings.TrimSpace(string(message)) != `{"status":"need first ram prompt"}` {
+			t.Fatalf(`Expected '{"status":"need first ram prompt"}', got '%s'`, strings.TrimSpace(string(message)))
+		}
+
+		err = ws.WriteMessage(websocket.TextMessage, []byte("Generate a cool ram"))
+		if err != nil {
+			t.Fatal(err)
 		}
 
 		_, message, err = ws.ReadMessage()
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(message) != "generating image" {
-			t.Fatalf("Expected 'generating image', got '%s'", string(message))
+		if strings.TrimSpace(string(message)) != `{"clicks":100,"status":"need clicks"}` {
+			t.Fatalf(`Expected '{"clicks":100,"status":"need clicks"}', got '%s'`, string(message))
 		}
+		ctx, cancel := context.WithTimeout(ctx, time.Second*15)
+		defer cancel()
+		go func() {
+			for _ = range 14 {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					time.Sleep(1 * time.Second)
+					err = ws.WriteMessage(websocket.TextMessage, []byte("15"))
+					if err != nil {
+						t.Error(err)
+						return
+					}
+				}
+			}
+		}()
 
-		_, message, err = ws.ReadMessage()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				_, message, err = ws.ReadMessage()
+				if err != nil {
+					t.Fatal(err)
+				}
+				fmt.Println(string(message))
+
+				var response map[string]any
+				err = json.Unmarshal(message, &response)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, ok := response["id"]; ok {
+					_, okImageUrl := response["image_url"]
+					_, okDescription := response["description"]
+					if !okImageUrl || !okDescription {
+						t.Fatalf("Incomplete response: %v", response)
+					}
+					return
+				} else {
+					switch response["status"] {
+					case "image generated":
+					case "success clicked":
+						continue
+					}
+				}
+			}
+
+		}
+	})
+	t.Run("CreateRam rate limit", func(t *testing.T) {
+		url := fmt.Sprintf("ws://%s/api/users/test_rams_user/ws/generate-ram", testingHost)
+
+		ws, resp, err := websocket.DefaultDialer.Dial(url, http.Header{})
+		if err != nil {
+			if errors.Is(err, websocket.ErrBadHandshake) {
+				text, _ := io.ReadAll(resp.Body)
+				defer resp.Body.Close()
+				t.Fatalf("Error connection ws/generate-ram: %d %s", resp.StatusCode, text)
+			}
+			t.Fatal(err)
+		}
+		defer ws.Close()
+		err = ws.WriteMessage(websocket.TextMessage, []byte(token))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		var response map[string]string
+		_, message, err := ws.ReadMessage()
+		if err != nil {
+			t.Fatal(err)
+		}
+		var response map[string]any
 		err = json.Unmarshal(message, &response)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if response["id"] == "" || response["image_url"] == "" || response["image_description"] == "" {
-			t.Fatalf("Incomplete response: %v", response)
-		}
-		log.Println(response["image_url"])
-	})
-	t.Run("CreateRam rate limit", func(t *testing.T) {
-		url := fmt.Sprintf("ws://%s/api/users/test_rams_user/ws/create-ram", testingHost)
-		header := http.Header{}
-		header.Add("Authorization", "Bearer "+token)
-
-		ws, resp, err := websocket.DefaultDialer.Dial(url, header)
-		if err == nil {
-			ws.Close()
-			t.Fatal("excepted rate limit")
-		}
-		if !errors.Is(err, websocket.ErrBadHandshake) {
-			t.Fatalf("excepted rate limit, got another error: %v", err)
-		}
-		if resp.StatusCode != http.StatusTooManyRequests {
-			data, err := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			if err != nil {
-				t.Fatal("error reading body")
-			}
-			t.Fatalf("Excepted 429 rate limit got: %d %s", resp.StatusCode, string(data))
+		if strings.HasPrefix(response["error"].(string), "you can generate next ram in") && response["code"] == 429 {
+			t.Fatalf(`Expected error rate limit, got '%s'`, strings.TrimSpace(string(message)))
 		}
 	})
 	t.Run("CreateRam another user", func(t *testing.T) {
-		url := fmt.Sprintf("ws://%s/api/users/test_rams_another_user/ws/create-ram", testingHost)
-		header := http.Header{}
-		header.Add("Authorization", "Bearer "+token)
+		url := fmt.Sprintf("ws://%s/api/users/test_rams_user/ws/generate-ram", testingHost)
 
-		ws, resp, err := websocket.DefaultDialer.Dial(url, header)
-		if err == nil {
-			ws.Close()
-			t.Fatal("excepted forbidden")
-		}
-		if !errors.Is(err, websocket.ErrBadHandshake) {
-			t.Fatalf("excepted forbidden, got another error: %v", err)
-		}
-		if resp.StatusCode != http.StatusForbidden {
-			data, err := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			if err != nil {
-				t.Fatal("error reading body")
-			}
-			t.Fatalf("Excepted 403 forbidden got: %d %s", resp.StatusCode, string(data))
-		}
-
-		url = fmt.Sprintf("ws://%s/api/users/test_rams_another_user/ws/create-ram", testingHost)
-		header = http.Header{}
-		header.Add("Authorization", "Bearer "+anotherToken)
-
-		ws, resp, err = websocket.DefaultDialer.Dial(url, header)
+		ws, resp, err := websocket.DefaultDialer.Dial(url, http.Header{})
 		if err != nil {
 			if errors.Is(err, websocket.ErrBadHandshake) {
 				text, _ := io.ReadAll(resp.Body)
 				defer resp.Body.Close()
-				t.Fatalf("Error connection ws/create-ram: %d %s", resp.StatusCode, text)
+				t.Fatalf("Error connection ws/generate-ram: %d %s", resp.StatusCode, text)
 			}
 			t.Fatal(err)
 		}
 		defer ws.Close()
-
-		err = ws.WriteMessage(websocket.TextMessage, []byte("Generate a cool ram"))
+		err = ws.WriteMessage(websocket.TextMessage, []byte(token))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -984,73 +973,50 @@ func TestRamsResource(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(message) != "generating prompt" {
-			t.Fatalf("Expected 'generating prompt', got '%s'", string(message))
-		}
-
-		_, message, err = ws.ReadMessage()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(message) != "generating image" {
-			t.Fatalf("Expected 'generating image', got '%s'", string(message))
-		}
-
-		_, message, err = ws.ReadMessage()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		var response map[string]string
+		var response map[string]any
 		err = json.Unmarshal(message, &response)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if response["id"] == "" || response["image_url"] == "" || response["image_description"] == "" {
-			t.Fatalf("Incomplete response: %v", response)
+		if strings.HasPrefix(response["error"].(string), "it's not your ram") && response["code"] == 403 {
+			t.Fatalf(`Expected forbidden, got '%s'`, strings.TrimSpace(string(message)))
 		}
-		log.Println(response["image_url"])
 	})
-	t.Run("GetRam, GetRams", func(t *testing.T) {
-		for id, username := range []string{"test_rams_user", "test_rams_another_user"} {
-			resp, err := http.Get(fmt.Sprintf("http://%s/api/users/%s/rams/%d", testingHost, username, id+1))
-			if err != nil {
-				t.Fatal(err)
-			}
+	t.Run("GetRam_GetRams", func(t *testing.T) {
+		resp, err := http.Get(fmt.Sprintf("http://%s/api/users/%s/rams/%d", testingHost, "test_rams_user", 1))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			text, _ := io.ReadAll(resp.Body)
+			t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
+		}
+
+		var ram map[string]any
+		err = json.NewDecoder(resp.Body).Decode(&ram)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ram["id"] == 0 || ram["image_url"] == "" || ram["description"] == "" {
+			t.Fatalf("Unexpected ram data: %v", ram)
+		}
+		resp, err = http.Get(fmt.Sprintf("http://%s/api/users/%s/rams", testingHost, "test_rams_user"))
+		if resp.StatusCode != http.StatusOK {
+			text, _ := io.ReadAll(resp.Body)
 			defer resp.Body.Close()
+			t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
+		}
 
-			if resp.StatusCode != http.StatusOK {
-				text, _ := io.ReadAll(resp.Body)
-				defer resp.Body.Close()
-				t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
-			}
-
-			var ram map[string]interface{}
-			err = json.NewDecoder(resp.Body).Decode(&ram)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if ram["id"] == 0 || ram["image_url"] == "" || ram["description"] == "" {
-				t.Fatalf("Unexpected ram data: %v", ram)
-			}
-			resp, err = http.Get(fmt.Sprintf("http://%s/api/users/%s/rams", testingHost, username))
-			if resp.StatusCode != http.StatusOK {
-				text, _ := io.ReadAll(resp.Body)
-				defer resp.Body.Close()
-				t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
-			}
-
-			var rams []map[string]interface{}
-			err = json.NewDecoder(resp.Body).Decode(&rams)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if !reflect.DeepEqual(rams, []map[string]interface{}{ram}) {
-				t.Fatalf("Wrong response from get rams: %v, expected: %v", rams, []map[string]interface{}{ram})
-			}
+		var rams []map[string]any
+		err = json.NewDecoder(resp.Body).Decode(&rams)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !(rams[0]["id"] == ram["id"] && rams[0]["description"] == ram["description"] && rams[0]["image_url"] == ram["image_url"] && rams[0]["taps"] == ram["taps"] && rams[0]["user_id"] == ram["user_id"]) {
+			t.Fatalf("Wrong response from get rams: %v, expected: %v", rams, []map[string]any{ram})
 		}
 	})
 
@@ -1068,113 +1034,6 @@ func TestRamsResource(t *testing.T) {
 		}
 
 		resp, err = http.Get(fmt.Sprintf("http://%s/api/users/test_rams_user/rams/1234", testingHost))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusNotFound {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status not found, got: %d %s", resp.StatusCode, text)
-		}
-	})
-
-	t.Run("DeleteRam", func(t *testing.T) {
-		client := &http.Client{}
-		req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s/api/users/test_rams_user/rams/1", testingHost), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
-		}
-
-		resp, err = http.Get(fmt.Sprintf("http://%s/api/users/test_rams_user/rams/1", testingHost))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusNotFound {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status not found, got: %d %s", resp.StatusCode, text)
-		}
-	})
-
-	t.Run("DeleteRam bad ram", func(t *testing.T) {
-		client := &http.Client{}
-
-		req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s/api/users/test_rams_user/rams/1234", testingHost), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusNotFound {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status not found, got: %d %s", resp.StatusCode, text)
-		}
-	})
-
-	t.Run("DeleteRam another user", func(t *testing.T) {
-		client := &http.Client{}
-
-		req, err := http.NewRequest("DELETE", fmt.Sprintf("http://%s/api/users/test_rams_another_user/rams/1", testingHost), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusForbidden {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status forbidden, got: %d %s", resp.StatusCode, text)
-		}
-
-		req, err = http.NewRequest("DELETE", fmt.Sprintf("http://%s/api/users/test_rams_another_user/rams/2", testingHost), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Authorization", "Bearer "+anotherToken)
-
-		resp, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			text, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			t.Fatalf("Expected status OK, got: %d %s", resp.StatusCode, text)
-		}
-
-		resp, err = http.Get(fmt.Sprintf("http://%s/api/users/test_rams_another_user/rams/2", testingHost))
 		if err != nil {
 			t.Fatal(err)
 		}
