@@ -115,7 +115,7 @@ func (h *Handlers) GetRam(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PutPatchRam (НЕИСПОЛЬЗУЕТСЯ) также выполняет функции PutRam
+// PutPatchRam (Unused) also running for Put method, recommended Patch
 func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params := mux.Vars(r)
@@ -164,7 +164,7 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteRam НЕ ИСПОЛЬЗУЕТСЯ
+// DeleteRam (Unused)
 func (h *Handlers) DeleteRam(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params := mux.Vars(r)

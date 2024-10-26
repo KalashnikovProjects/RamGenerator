@@ -86,7 +86,7 @@ function toCanvas() {
             enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
             borderEnabled: false,
             rotateEnabled: false,
-            anchorFill: '#8000ff', // Фиолетовый цвет для углов
+            anchorFill: '#8000ff', // Corners
             anchorStroke: '#2e0055',
             boundBoxFunc: function (oldBox, newBox) {
                 if (

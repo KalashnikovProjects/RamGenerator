@@ -25,8 +25,6 @@ import (
 	"time"
 )
 
-// TODO ПОЧИНИТЬ ТЕСТЫ
-
 type expected struct {
 	statusCode    int
 	response      string
@@ -762,8 +760,6 @@ func TestUsersResource(t *testing.T) {
 		})
 	}
 }
-
-// TODO: Добавить тесты с test_rams_another_user
 
 func TestRamsResource(t *testing.T) {
 	var token string

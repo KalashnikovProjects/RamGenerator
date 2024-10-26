@@ -75,7 +75,7 @@ func (h *Handlers) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Записывает id вместо токена при регистрации
+	// Write user id instead of token
 	//res, err := json.Marshal(entities.IdResponse{Id: id})
 	//if err != nil {
 	//	http.Error(w, fmt.Sprintf("json marshal error"), http.StatusInternalServerError)
@@ -147,7 +147,7 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Me возвращает информацию о пользователе, владельце токена из Authorization
+// Me return user info from Authorization: Bearer token
 func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	dbUser, err := database.GetUserWithAvatarUrlContext(ctx, h.db, ctx.Value("userId").(int))

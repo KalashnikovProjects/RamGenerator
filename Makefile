@@ -42,7 +42,7 @@ py-protos:
 		--grpc_python_out=Backend/Python-ai/ai_generator/proto_generated \
 		--pyi_out=Backend/Python-ai/ai_generator/proto_generated \
 		--proto_path=proto
-# Костыль  для фикса относительных импортов в сгенерированных файлах
+# For fixing releative imports
 	$(MAKE) fix-py-generated-imports
 
 

@@ -23,15 +23,15 @@ async function effect(x, y, effectImg, endTime=1) {
     const direction = Math.random() < 0.5 ? -1 : 1;
     const angle = (Math.random() * 20 + 40) * Math.PI / 180;
 
-    // Увеличиваем начальную скорость для большей дальности
+    // Init speed coef
     const initialSpeed = Math.random() * 15 + 30;
 
     let time = 0;
-    const gravity = 1.2; // Коэффициент гравитации
+    const gravity = 1.2; // Gravitation coeff
     let velocityY = -initialSpeed * Math.sin(angle);
 
     function animate() {
-        time += 0.016; // Примерно 60 кадров в секунду
+        time += 0.016; // 60 FPS
 
         const x = direction * initialSpeed * Math.cos(angle) * time * 3;
         velocityY += gravity;
@@ -349,15 +349,12 @@ class Generator {
             case 429:
                 if (data.error.startsWith("you can generate only")) {
                     error = `Вы уже сгенерировали всех баранов на сегодня. Следующий раз вы сможете через <br><h1 id='error-countdown'></h1>`;
-                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);this.close();ramGenerator = new Generator();});
-                    setTimeout(cd, 10);
-                    this.countdownInterval = setInterval(cd, 1000);
                 } else {
                     error = `Нельзя так часто генерировать баранов! Вы сможете сгенерировать следующего барана через <br><h1 id='error-countdown'></h1>`;
-                    let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);this.close();ramGenerator = new Generator();});
-                    setTimeout(cd, 10);
-                    this.countdownInterval = setInterval(cd, 1000);
                 }
+                let cd = () => countdown(new Date(data.next * 1000), "error-countdown", () => {clearInterval(this.countdownInterval);this.close();ramGenerator = new Generator();});
+                setTimeout(cd, 10);
+                this.countdownInterval = setInterval(cd, 1000);
                 break
             case 400:
                 switch (data.error) {
@@ -407,7 +404,6 @@ class Generator {
                         break;
                 }
                 break
-            //TODO при других ошибках либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз или без)
             default:
                 console.log("Unknown error", data.code, data.error);
                 error = `Произошла неизвестная ошибка`;
@@ -678,7 +674,6 @@ class RamPage {
                         break;
                 }
                 break;
-            //TODO при других ошибках либо закрывать popup, либо выводить сообщение об ошибке (с кнопкой ещё раз и без)
             default:
                 console.log("Неизвестная ошибка", data.code, data.error);
                 error = `Неизвестная ошибка ${data.code} ${data.error}`;

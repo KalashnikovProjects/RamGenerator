@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// AuthorizationMiddleware проверяет наличие и валидность Bearer токена в запросе
+// AuthorizationMiddleware check Authorization: Bearer token
 func AuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")

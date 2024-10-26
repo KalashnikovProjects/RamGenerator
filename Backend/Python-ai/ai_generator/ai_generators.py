@@ -32,11 +32,11 @@ class NoRamError(Exception):
     pass
 
 
-# Ключи на русском для того, чтобы gemini ответил на русском
+# Dict keys on russian for russia model response
 DescriptionResponse = TypedDict('DescriptionResponse', {'есть баран': bool, 'краткое описание': str}, total=True)
 
 
-# Ключи на русском для того, чтобы gemini ответил на русском
+# Dict keys on russian for russia model response
 PromptResponse = TypedDict('PromptResponse', {'есть мат': bool, 'запрос': str}, total=True)
 
 

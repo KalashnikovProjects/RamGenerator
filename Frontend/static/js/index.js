@@ -88,12 +88,9 @@ async function loadTopRams() {
             }
         } else {
             console.error(response.text())
-            // TODO:
-            // showError();
         }
     } catch (error) {
         console.log(error)
-        // showError();
     }
 }
 

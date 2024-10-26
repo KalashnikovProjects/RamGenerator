@@ -7,7 +7,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 ROOT_PATH = os.getenv("ROOT_PATH", "../..")
 
-load_dotenv(f"{ROOT_PATH}/.env")  # Такой путь чтобы работало без докера
+load_dotenv(f"{ROOT_PATH}/.env")  # For working without docker
 with open(f"{ROOT_PATH}/config.yaml") as f:
     yaml_config = yaml.load(f, Loader=yaml.FullLoader)
 
