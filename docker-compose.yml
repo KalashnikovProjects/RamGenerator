@@ -59,18 +59,5 @@ services:
     ports:
       - "50051:50051"
 
-  pgadmin:
-    container_name: pgadmin4_container
-    image: dpage/pgadmin4:8.8
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "root"
-    volumes:
-      - pgadmin:/var/lib/pgadmin
-    ports:
-      - "5050:80"
-
-
 volumes:
   postgres:
-  pgadmin:
