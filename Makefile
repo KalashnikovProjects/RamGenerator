@@ -1,5 +1,5 @@
 
-all: protos up
+all: protos
 
 
 ifeq ($(OS), Windows_NT)
@@ -47,23 +47,3 @@ py-protos:
 
 
 protos: go-protos py-protos
-
-# DOCKER SECTION
-.PHONY: build, up, start, stop, down, restart
-SERVICE?=
-
-%:
-	@:
-
-build:
-	docker-compose build $(filter-out $@,$(MAKECMDGOALS))
-up:
-	docker-compose up -d $(filter-out $@,$(MAKECMDGOALS))
-start:
-	docker-compose start $(filter-out $@,$(MAKECMDGOALS))
-stop:
-	docker-compose stop $(filter-out $@,$(MAKECMDGOALS))
-down:
-	docker-compose down $(filter-out $@,$(MAKECMDGOALS))
-restart:
-	docker-compose restart $(filter-out $@,$(MAKECMDGOALS))
