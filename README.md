@@ -28,11 +28,11 @@
 
 ### At the microservices/docker containers level, it works like this:
 * **postgres** - database.
-* **go-api** - rest api server. By default on port 8082
-* **go-static-server** - returns static site files, renders html templates at startup. By default on port 8081
-* **swagger** - swagger ui, use port 8083
-* **nginx** - combines api server, go-static-server and swagger on port 80. Api at /api, and swagger ui at /swagger.
-* **python-ai** - gRPC server for requests to ai api's on port 50051.
+* **go-api** - rest api server. By default on port 8082. [DockerHub repository](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-go-api)
+* **go-static-server** - returns static site files, renders html templates at startup. By default on port 8081. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-go-static-server)
+* **swagger** - swagger ui, use port 8083. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-swagger)
+* **nginx** - combines api server, go-static-server and swagger on port 80. Api at /api, and swagger ui at /swagger. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-nginx)
+* **python-ai** - gRPC server for requests to ai api's on port 50051. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-python-ai)
 
 [<img src="images/docker.png" width="450"/>](images/docker.png)
 
