@@ -19,7 +19,7 @@ services:
       - "8083:8080"
 
   postgres:
-    image: postgres
+    image: postgres:16
     hostname: postgres
     container_name: my_postgres
     env_file:
