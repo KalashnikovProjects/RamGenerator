@@ -28,11 +28,11 @@
 
 ### На уровне микросервисов/docker контейнеров это работает так:
 * **postgres** - база данных.
-* **go-api** - rest api сервер. По умолчанию на порту 8082
-* **go-static-server** - возвращает статичные файлы сайта, рендерит html шаблоны при старте. По умолчанию на порту 8081
-* **swagger** - swagger ui, на порту 8083
-* **nginx** - объединяет rest api сервер, go-static-server и swagger на порту 80. Api по адресу /api, а swagger ui на /swagger.
-* **python-ai** - gRPC сервер для запросов к нейросетям на порту 50051.
+* **go-api** - rest api сервер. По умолчанию на порту 8082. [DockerHub repository](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-go-api)
+* **go-static-server** - возвращает статичные файлы сайта, рендерит html шаблоны при старте. По умолчанию на порту 8081. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-go-static-server)
+* **swagger** - swagger ui, на порту 8083. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-swagger)
+* **nginx** - объединяет rest api сервер, go-static-server и swagger на порту 80. Api по адресу /api, а swagger ui на /swagger. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-nginx)
+* **python-ai** - gRPC сервер для запросов к нейросетям на порту 50051. [DockerHub](https://hub.docker.com/repository/docker/kalashnik/ramgenerator-python-ai)
 
 [<img src="images/docker.png" width="450"/>](images/docker.png)
 
