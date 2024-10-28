@@ -8,6 +8,15 @@ services:
     depends_on:
       - go-api
       - go-static-server
+      - swagger
+
+  swagger:
+    hostname: swagger
+    build:
+      context: swagger
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8080"
 
   postgres:
     image: postgres

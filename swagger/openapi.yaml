@@ -1,0 +1,506 @@
+openapi: 3.0.3
+info:
+  title: RamGenerator API
+  description: |-
+    taprams.ru API documentation
+    
+    - [taprams.ru](https://taprams.ru)
+    - [GitHub repository](https://github.com/KalashnikovProjects/RamGenerator)
+  version: 1.0.11
+servers:
+  - url: https://taprams.ru/api
+tags:
+  - name: authentication
+    description: Authentication endpoints
+  - name: users
+    description: Users information
+  - name: rams
+    description: Rams information
+paths:
+  /register:
+    post:
+      tags:
+        - authentication
+      summary: Register user
+      description: Create user with inputted login and password, return jwt authorization token
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: Successful register
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTToken'
+        '400':
+          description: Bad username or fields not specified
+  /login:
+    post:
+      tags:
+        - authentication
+      summary: Login user
+      description: Create jwt authorization token for user
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTToken'
+        '400':
+          description: Bad username or fields not specified
+        '401':
+          description: Wrong Password
+  /me:
+    get:
+      tags:
+        - authentication
+      summary: Get information about user from token
+      description: Get information about user from token in header
+      operationId: getMe
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid authorization
+      security:
+        - user_token: []
+  /users/{username}:
+    get:
+      tags:
+        - users
+      summary: Get information about user
+      description: Get information about user by username
+      operationId: getUser
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Bad username, user not found
+    put:
+      tags:
+        - users
+      summary: Update user information
+      description: Update user information by username
+      operationId: putUser
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeableUser'
+      responses:
+        '200':
+          description: Successful updated
+        '400':
+          description: Bad new username or fields not specified
+        '401':
+          description: Authorization required
+        '403':
+          description: You can't edit another user, or avatar_ram_id is not your ram id
+        '404':
+          description: Bad username, user not found
+      security:
+        - user_token: []
+    patch:
+      tags:
+        - users
+      summary: Update user information
+      description: Update user information by username, but not all fields required
+      operationId: patchUser
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeableUser'
+      responses:
+        '200':
+          description: Successful updated
+        '400':
+          description: Bad new username
+        '401':
+          description: Authorization required
+        '403':
+          description: You can't edit another user, or avatar_ram_id is not your ram id
+        '404':
+          description: Bad username, user not found
+      security:
+        - user_token: []
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: Delete user
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      responses:
+        '200':
+          description: Successful deleted
+        '401':
+          description: Authorization required
+        '403':
+          description: You can't delete another user
+        '404':
+          description: Bad username, user not found
+      security:
+        - user_token: []
+  /users/{username}/rams:
+    get:
+      tags:
+        - rams
+      summary: Get user rams
+      description: Get user rams by username
+      operationId: getRams
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref:  '#/components/schemas/Ram'
+        '404':
+          description: Bad username, user not found
+  /users/{username}/rams/{ramId}:
+    get:
+      tags:
+        - rams
+      summary: Get user ram
+      description: Get ram by username and ram id
+      operationId: getRam
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+        - name: ramId
+          in: path
+          description: Id of ram
+          required: true
+          schema:
+            type: string
+            default: 70
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/RamWithUsername'
+        '400':
+          description: ramId must be integer
+        '404':
+          description: Bad username or ramId, ram not found
+  /users/{username}/ws/generate-ram:
+    get:
+      tags:
+        - rams
+      summary: Generate ram with Websocket
+      description: |-
+        ## Generate ram Websocket
+        
+        → In first message client send token
+        
+        ← Server send "need first ram prompt" or "need ram prompt"
+        
+        → Client send ram prompt (max 30 symbols)
+        
+        ← Server send {"status": "need clicks", "clicks": clicks_count}, clicks_count is 100 or 200 or 500
+        
+        → Client send messages with clicks count (max 200 clicks per message, 20 per second)
+        
+        ← Server send "success clicked" and "image generated" messages
+        
+        ← Server send Ram in json
+        
+        Errors in formate:
+        {"error": "error string", "code": code of error, like http codes}
+        
+        Rate limit errors has "next" field (retry in time in UNIX)
+      
+
+      operationId: generateRamWS
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+      responses:
+        '101':
+          description: Upgraded to websocket
+  /users/{username}/rams/{ramId}/ws/clicker:
+    get:
+      tags:
+        - rams
+      summary: Ram clicker Websocket
+      description: |-
+        ## Ram clicker Websocket
+        
+        → In first message client send token
+        
+        → Client send messages with clicks count (max 200 clicks per message, 20 per second)
+        
+        Errors in formate:
+        {"error": "error string", "code": code of error, like http codes}
+      
+
+      operationId: clickerWS
+      parameters:
+        - name: username
+          in: path
+          description: Username
+          required: true
+          schema:
+            type: string
+            default: "my_username"
+        - name: ramId
+          in: path
+          description: Id of ram
+          required: true
+          schema:
+            type: string
+            default: 70
+      responses:
+        '101':
+          description: Upgraded to websocket
+  /top-rams:
+    get:
+      tags:
+        - rams
+      summary: Get top rams
+      description: Get top 5 rams by taps
+      operationId: topRams
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref:  '#/components/schemas/RamWithUserInfo'
+components:
+  schemas:
+    JWTToken:
+      type: string
+      example: "jwt token"
+    LoginUser:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "my_username"
+        password:
+          type: string
+          example: "qwerty123"
+    ChangeableUser:
+      type: object
+      properties:
+        password:
+          type: string
+          example: "newPassword123"
+        username:
+          type: string
+          example: "my_username"
+        avatar_ram_id:
+          type: integer
+          example: 68
+        avatar_box:
+          type: array
+          example: [[0.2, 0.2], [0.8, 0.8]]
+          items:
+            type: array
+            items:
+              type: integer
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        username:
+          type: string
+          example: "my_username"
+        daily_ram_generation_time:
+          type: integer
+          example: 0
+        rams_generated_last_day:
+          type: integer
+          example: 1
+          enum:
+            - 0
+            - 1
+            - 2
+        avatar_ram_id:
+          type: integer
+          example: 68
+        avatar_box:
+          type: array
+          example: [[0.2, 0.2], [0.8, 0.8]]
+          items:
+            type: array
+            items:
+              type: integer
+        avatar_url:
+          type: string
+          example: 'https://example.com/avatar-ram.png'
+    Ram:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 70
+        taps:
+          type: integer
+          example: 106
+        description:
+          type: string
+          description: "On Russian language"
+          example: "Крутой баран в очках"
+        image_url:
+          type: string
+          example: "https://example.com/ram.png"
+        user_id:
+          type: integer
+          example: 16
+    RamWithUsername:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 70
+        taps:
+          type: integer
+          example: 106
+        description:
+          type: string
+          description: "On Russian language"
+          example: "Крутой баран в очках"
+        image_url:
+          type: string
+          example: "https://example.com/ram.png"
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 16
+            username:
+              type: string
+              example: "my_username"
+        user_id:
+          type: integer
+          example: 16
+    RamWithUserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 70
+        taps:
+          type: integer
+          example: 106
+        description:
+          type: string
+          description: "On Russian language"
+          example: "Крутой баран в очках"
+        image_url:
+          type: string
+          example: "https://example.com/ram.png"
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 16
+            username:
+              type: string
+              example: "my_username"
+            avatar_ram_id:
+              type: integer
+              example: 68
+            avatar_box:
+              type: array
+              example: [[0.2, 0.2], [0.8, 0.8]]
+              items:
+                type: array
+                items:
+                  type: integer
+            avatar_url:
+              type: string
+              example: 'https://example.com/avatar-ram.png'
+        user_id:
+          type: integer
+          example: 16
+  securitySchemes:
+    user_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
