@@ -1,6 +1,6 @@
-import queue
-import threading
+from queue import Queue
 import time
+import threading
 
 
 class QueTimoutError(TimeoutError):
@@ -45,7 +45,7 @@ def api_rate_limiter_with_que(rate_limit: int, timeout: int = 200, rate_limit_ti
     Задачи на которые не хватило лимита откладываются в очередь, элементы очереди -
     threading.Event(), евенты подаются в отдельном треде, wrapper функция ждёт евента и запускается.
     """
-    rate_que = queue.Queue()
+    rate_que = Queue()
     last_request_time = [time.time() - rate_limit_time for _ in range(rate_limit)]
 
     threading.Thread(target=_background_rate_limit_que_process, daemon=True, args=(rate_que, last_request_time, rate_limit_time)).start()

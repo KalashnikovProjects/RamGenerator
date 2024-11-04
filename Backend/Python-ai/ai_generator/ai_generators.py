@@ -1,15 +1,12 @@
-from typing_extensions import TypedDict
-
 import google.generativeai as genai
-
+import json
+import requests
+import time
 from retry import retry
+from typing_extensions import TypedDict
 
 from . import rate_limiters
 from . import config
-
-import json
-import time
-import requests
 
 
 class GeminiCensorshipError(Exception):
@@ -41,14 +38,12 @@ PromptResponse = TypedDict('PromptResponse', {'есть мат': bool, 'запр
 
 
 class PromptGenerator:
-    def __init__(self, api_key: str,
+    def __init__(self,
                  system_instructions: str,
                  max_output_tokens: int = None,
                  model_name: str = config.GEMINI.MODEL,
                  safety_settings=None):
 
-        genai.configure(transport=config.GEMINI.TRANSPORT, api_key=api_key,
-                        client_options={"api_endpoint": config.GEMINI.ENDPOINT})
         self.model = genai.GenerativeModel(
             model_name=model_name,
             safety_settings=safety_settings,
@@ -69,6 +64,11 @@ class PromptGenerator:
             else:
                 raise GeminiBugError
         return res.text.strip()
+
+    @staticmethod
+    def configure():
+        genai.configure(transport=config.GEMINI.TRANSPORT, api_key=config.GEMINI.API_KEY,
+                        client_options={"api_endpoint": config.GEMINI.ENDPOINT})
 
 
 class ImageGenerationTimeoutError(TimeoutError):
