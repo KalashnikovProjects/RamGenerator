@@ -221,7 +221,6 @@ class Clicker {
         this.sendClicksCallback = sendClicksCallback;
         this.clicksCount = start;
         this.lastSendCount = start;
-        this.clicksIferror = start;
         this.lastSendTime = new Date();
         this.onclickBinded = this.onclick.bind(this);
 
@@ -235,14 +234,15 @@ class Clicker {
         if (!forced && (this.lastSendCount >= this.clicksCount || (+now - +this.lastSendTime) < 5 * 100)) {
             return
         }
-        this.clicksIferror = this.clicksCount;
         this.sendClicksCallback(this.clicksCount-this.lastSendCount);
         this.lastSendCount = this.clicksCount;
         this.lastSendTime = now;
     }
 
-    rollbackErrorClicks() {
-        this.clicksCount = this.clicksIferror;
+    rollbackErrorClicks(amount) {
+        this.clicksCount -= amount;
+        this.lastSendCount = this.clicksCount;
+        this.onclickCallback(this.clicksCount, null);
     }
 
     onclick(event) {
@@ -360,7 +360,7 @@ class Generator {
                 switch (data.error) {
                     case "invalid clicks":
                         try {
-                            this.targetedClicker.rollbackErrorClicks();
+                            this.targetedClicker.rollbackErrorClicks(data.clicks);
                         } catch (e) {}
                         break;
                     case "user prompt or rams descriptions contains illegal content":
@@ -458,9 +458,10 @@ class Generator {
     onclickCallback(value, event) {
         const clicksEl = document.getElementById("clicks");
         clicksEl.innerText = `${value}/${this.needClicks}`;
-
-        effect(event.clientX, event.clientY, "/static/img/icon512.png")
-        clickResize(event.target)
+        if (event) {
+            effect(event.clientX, event.clientY, "/static/img/icon512.png");
+            clickResize(event.target);
+        }
     }
 
     sendClicks(value) {
@@ -542,8 +543,10 @@ class Generator {
                         function (value, event) {
                             const clicksEl = document.getElementById("wait-clicks");
                             clicksEl.innerText = `${value}`;
-                            effect(event.clientX, event.clientY, "/static/img/icon512.png")
-                            clickResize(event.target)
+                            if (event) {
+                                effect(event.clientX, event.clientY, "/static/img/icon512.png");
+                                clickResize(event.target);
+                            }
                         }.bind(this),
                         function () {});
                 }
@@ -619,8 +622,10 @@ class RamPage {
                         "ram-clicker",
                         function (value, event) {
                             document.getElementById("ram-clicked").innerHTML = `${value} тапов`
-                            effect(event.clientX, event.clientY, "/static/img/icon512.png")
-                            clickResize(event.target)
+                            if (event) {
+                                effect(event.clientX, event.clientY, "/static/img/icon512.png");
+                                clickResize(event.target);
+                            }
                         },
                         this.sendClicks.bind(this),
                         this.ram.taps,
@@ -665,8 +670,11 @@ class RamPage {
                 switch (data.error) {
                     case "invalid clicks":
                         try {
-                            this.targetedClicker.rollbackErrorClicks();
-                        } catch (e) {}
+                            this.clicker.rollbackErrorClicks(data.clicks);
+                        } catch (e) {
+                            console.error(e);
+                            console.log(data.clicks)
+                        }
                         break;
                     default:
                         console.log("Unknown error", data.code, data.error);

@@ -32,6 +32,12 @@ type wsError struct {
 	Code  int    `json:"code"`
 }
 
+type wsErrorInvalidClicks struct {
+	Error  string `json:"error"`
+	Code   int    `json:"code"`
+	Clicks int    `json:"clicks"`
+}
+
 type wsErrorRateLimit struct {
 	Error string `json:"error"`
 	Code  int    `json:"code"`
@@ -220,11 +226,11 @@ func (h *Handlers) websocketNeedClicks(ctx context.Context, ws *websocket.Conn, 
 			}
 			messageClicks, err := strconv.Atoi(string(wsMessage))
 			if !ValidateClickData(messageClicks, lastClicks) {
-				WebsocketSendJSON(ctx, ws, wsError{"invalid clicks", 400})
+				lastClicks = time.Now()
+				WebsocketSendJSON(ctx, ws, wsErrorInvalidClicks{"invalid clicks", 400, messageClicks})
 				continue
 			}
 			lastClicks = time.Now()
-
 			clicked += messageClicks
 			if clicked >= amount {
 				err = WebsocketSendJSON(ctx, ws, map[string]any{"status": "success clicked"})
@@ -314,7 +320,8 @@ func (h *Handlers) upgradedWebsocketClicker(ctx context.Context, ws *websocket.C
 
 			messageClicks, err := strconv.Atoi(string(wsMessage))
 			if !ValidateClickData(messageClicks, lastClicks) {
-				WebsocketSendJSON(ctx, ws, wsError{"invalid clicks", 400})
+				lastClicks = time.Now()
+				WebsocketSendJSON(ctx, ws, wsErrorInvalidClicks{"invalid clicks", 400, messageClicks})
 				continue
 			}
 			lastClicks = time.Now()
