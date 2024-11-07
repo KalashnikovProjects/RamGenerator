@@ -405,10 +405,8 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 	aiGeneratedRam := make(chan entities.Ram)
-	generated := false
 
 	go func() {
-		defer close(aiGeneratedRam)
 		var descriptions []string
 		if user.DailyRamGenerationTime != 0 {
 			rams, err := database.GetRamsByUserIdContext(ctx, h.db, user.Id)
@@ -447,11 +445,11 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 			cancel()
 			return
 		}
-		generated = true
 		err = WebsocketSendJSON(ctx, ws, map[string]string{"status": "image generated"})
 		if err != nil {
 			slog.Error("send message error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.Bool("websocket", true), slog.String("error", err.Error()))
 			WebsocketSendJSON(ctx, ws, wsError{"send message error", 500})
+			cancel()
 			return
 		}
 		aiGeneratedRam <- ram
@@ -479,10 +477,15 @@ func (h *Handlers) upgradedWebsocketGenerateRam(ctx context.Context, ws *websock
 		return
 	}
 
-	ram := <-aiGeneratedRam
-	if !generated {
+	var ram entities.Ram
+	select {
+	case <-ctx.Done():
+		close(aiGeneratedRam)
 		return
+	case ram = <-aiGeneratedRam:
+		close(aiGeneratedRam)
 	}
+
 	tx, err := h.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		slog.Error("unexpected db error", slog.String("place", "upgradedWebsocketGenerateRam"), slog.String("function", "BeginTx"), slog.Bool("websocket", true), slog.String("error", err.Error()))
