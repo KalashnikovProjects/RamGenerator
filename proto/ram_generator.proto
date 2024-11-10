@@ -27,7 +27,7 @@ message RamImage {
 }
 
 message RamImageUrl {
-  string url = 1;  // base64
+  string url = 1;
 }
 
 message RamDescription {
