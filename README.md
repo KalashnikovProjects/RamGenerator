@@ -38,6 +38,7 @@
 
 ## Launch
 ### `docker-compose up`
+If you want to run a modified version, or just build your docker images, use `docker-compose up --build`
 
 ### Necessary environment variables (see alse [template.env](template.env))
 #### For python-ai
