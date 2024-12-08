@@ -10,7 +10,7 @@ COPY ./config.yaml ./config.yaml
 
 RUN cd Backend/Go-static-server && CGO_ENABLED=0 go build -ldflags='-extldflags "-static"' -o ./compiled ./cmd
 
-FROM scratch
+FROM alpine
 COPY --from=builder /app/Backend/Go-static-server/compiled /app/Backend/Go-static-server/compiled
 COPY --from=builder /app/Frontend /app/Frontend
 COPY --from=builder /app/config.yaml /app/config.yaml

@@ -10,6 +10,14 @@ services:
       - go-api
       - go-static-server
       - swagger
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
+    restart: always
 
   swagger:
     hostname: swagger
@@ -19,6 +27,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8083:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
+    restart: always
 
   postgres:
     image: postgres:16
@@ -30,6 +46,14 @@ services:
       - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+      start_interval: 5s
+    restart: always
 
   go-api:
     hostname: api
@@ -47,6 +71,7 @@ services:
     depends_on:
       - python-ai
       - postgres
+    restart: always
 
   go-static-server:
     hostname: static-server
@@ -59,6 +84,7 @@ services:
       WEBSOCKET_PROTOCOL: "ws"
     ports:
       - "8081:8081"
+    restart: always
 
   python-ai:
     hostname: pygrpc
@@ -72,6 +98,7 @@ services:
       GRPC_PORT: 50051
     ports:
       - "50051:50051"
+    restart: always
 
 volumes:
   postgres:
