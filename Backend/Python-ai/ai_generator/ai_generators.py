@@ -83,39 +83,39 @@ class ImageGenerator:
             'X-Secret': f'Secret {secret_key}',
         }
 
-    def get_model(self):
-        response = requests.get(self.URL + 'key/api/v1/models', headers=self.AUTH_HEADERS)
+    def get_pipeline(self):
+        response = requests.get(self.URL + 'key/api/v1/pipelines', headers=self.AUTH_HEADERS)
         data = response.json()
         return data[0]['id']
 
-    def generate(self, prompt, style, model, width, height, images=1):
+    def generate(self, prompt, style, pipeline, width, height, images=1):
         params = {
             "type": "GENERATE",
             "style": style,
             "numImages": images,
-            "negativePromptUnclip": config.PROMPTS.IMAGE_NEGATIVE_PROMPT,
             "width": width,
             "height": height,
+            "negativePromptDecoder": config.PROMPTS.IMAGE_NEGATIVE_PROMPT,
             "generateParams": {
                 "query": f"{prompt}"
             }
         }
 
         data = {
-            'model_id': (None, model),
+            'pipeline_id': (None, pipeline),
             'params': (None, json.dumps(params), 'application/json')
         }
-        response = requests.post(self.URL + 'key/api/v1/text2image/run', headers=self.AUTH_HEADERS, files=data)
+        response = requests.post(self.URL + 'key/api/v1/pipeline/run', headers=self.AUTH_HEADERS, files=data)
         data = response.json()
         return data['uuid']
 
     def check_generation(self, request_id, attempts=20, delay=10):
         for attempt in range(attempts):
-            response = requests.get(self.URL + 'key/api/v1/text2image/status/' + request_id, headers=self.AUTH_HEADERS)
+            response = requests.get(self.URL + 'key/api/v1/pipeline/status/' + request_id, headers=self.AUTH_HEADERS)
             data = response.json()
             if data['status'] == 'DONE':
                 return data['images'][0]
-            if data["censored"] == "FAIL":
+            if data["status"] == "FAIL":
                 if data["censored"]:
                     raise ImageCensorshipError
                 else:
