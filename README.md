@@ -20,7 +20,7 @@
 ## The site works on:
 * Docker containers
 * Database - **Postgres**
-* **Go** - REST API server and server static files server.
+* **Go** - REST API server and server for static files.
 * **Python** - gRPC server, makes requests to the AI API (Gemini for text, Kandinsky for images)
 * Frontend without frameworks, simple js, html, css. Html files are divided into templates: base, header, footer and the
   pages content, dynamic page content is rendered on the frontend using js.
