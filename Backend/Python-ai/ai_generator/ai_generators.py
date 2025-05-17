@@ -1,3 +1,5 @@
+import logging
+
 import google.generativeai as genai
 import json
 import requests
@@ -113,10 +115,14 @@ class ImageGenerator:
         for attempt in range(attempts):
             response = requests.get(self.URL + 'key/api/v1/pipeline/status/' + request_id, headers=self.AUTH_HEADERS)
             data = response.json()
+            if "status" not in data:
+                logging.warning("Suspicious response from image generation service", data)
             if data['status'] == 'DONE':
-                return data['images'][0]
-            if data["status"] == "FAIL":
-                if data["censored"]:
+                return data['result']["files"][0]
+            elif "DISABLED" in data.get("pipeline_status", ""):
+                return ImageGenerationUnavailableError
+            elif data["status"] == "FAIL":
+                if data["result"]["censored"]:
                     raise ImageCensorshipError
                 else:
                     raise ImageGenerationUnavailableError
