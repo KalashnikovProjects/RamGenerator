@@ -1,7 +1,7 @@
 FROM golang:1.22.4-alpine AS builder
 WORKDIR /app
 
-COPY Backend/Go-api/go.mod Backend/Go-static-server/go.sum Backend/Go-api/
+COPY Backend/Go-api/go.mod Backend/Go-api/go.sum Backend/Go-api/
 RUN cd Backend/Go-api && go mod download
 
 COPY Backend/Go-api Backend/Go-api
