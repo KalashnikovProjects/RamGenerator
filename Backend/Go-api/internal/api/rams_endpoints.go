@@ -96,7 +96,7 @@ func (h *Handlers) GetRam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ram.User.Username != params["username"] {
+	if strings.ToLower(ram.User.Username) != strings.ToLower(params["username"]) {
 		http.Error(w, fmt.Sprintf("this is %s ram", params["username"]), http.StatusNotFound)
 		return
 	}
@@ -136,7 +136,7 @@ func (h *Handlers) PutPatchRam(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
-	if ctx.Value("userId").(int) != dbRam.UserId || dbRam.User.Username != params["username"] {
+	if ctx.Value("userId").(int) != dbRam.UserId || strings.ToLower(dbRam.User.Username) != strings.ToLower(params["username"]) {
 		http.Error(w, fmt.Sprintf("it's not your ram"), http.StatusForbidden)
 		return
 	}
@@ -184,7 +184,7 @@ func (h *Handlers) DeleteRam(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("unexpected db error"), http.StatusInternalServerError)
 		return
 	}
-	if ctx.Value("userId").(int) != dbRam.UserId || dbRam.User.Username != params["username"] {
+	if ctx.Value("userId").(int) != dbRam.UserId || strings.ToLower(dbRam.User.Username) != strings.ToLower(params["username"]) {
 		http.Error(w, fmt.Sprintf("it's not your ram"), http.StatusForbidden)
 		return
 	}
