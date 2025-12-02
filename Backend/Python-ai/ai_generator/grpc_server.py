@@ -48,6 +48,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             result = json.loads(res)
             if result.get("есть мат", False):
                 raise ai_generators.GeminiCensorshipError
+            if len(result["запрос"]) > 200:
+                result["запрос"] = result["запрос"][:197] + "..."
             return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt contains illegal content")
@@ -61,7 +63,6 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             logging.info(f"Generating hybrid prompt from prompt:{request.user_prompt}")
 
             generator = ai_generators.PromptGenerator(system_instructions=config.PROMPTS.BASE_HYBRID_PROMPT,
-                                                      max_output_tokens=config.GEMINI.MAX_IMAGE_PROMPT_TOKENS,
                                                       model_name=config.GEMINI.MODEL,
                                                       safety_settings=config.GEMINI.SAFETY_SETTINGS)
             rams = ';'.join(request.ram_descriptions)
@@ -72,6 +73,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             result = json.loads(res)
             if result.get("есть мат", False):
                 raise ai_generators.GeminiCensorshipError
+            if len(result["запрос"]) > 200:
+                result["запрос"] = result["запрос"][:197] + "..."
             return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt or descriptions contains illegal content")
@@ -111,7 +114,6 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             logging.info(f"Generating description")
 
             generator = ai_generators.PromptGenerator(system_instructions=config.PROMPTS.BASE_DESCRIPTION_PROMPT,
-                                                      max_output_tokens=config.GEMINI.MAX_DESCRIPTION_TOKENS,
                                                       model_name=config.GEMINI.MODEL,
                                                       safety_settings=config.GEMINI.SAFETY_SETTINGS)
             req = requests.get(request.url)
@@ -126,6 +128,8 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             result = json.loads(res)
             if not result.get("есть баран", False):
                 raise ai_generators.NoRamError
+            if len(result["краткое описание"]) > 75:
+                result["краткое описание"] = result["краткое описание"][:72] + "..."
             return ram_generator_pb2.RamDescription(description=result["краткое описание"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")

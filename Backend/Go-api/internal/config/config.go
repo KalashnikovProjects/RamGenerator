@@ -25,14 +25,10 @@ type DatabaseConfig struct {
 	DBName   string
 }
 
-type AnotherTokens struct {
-	FreeImageHostApiKey string
-}
-
 type SecretConfig struct {
-	GRPC          GRPCConfig
-	Database      DatabaseConfig
-	AnotherTokens AnotherTokens
+	GRPC     GRPCConfig
+	Database DatabaseConfig
+	Image    ImageConfig
 }
 
 type UsersConfig struct {
@@ -47,7 +43,9 @@ type GenerationConfig struct {
 }
 
 type ImageConfig struct {
-	DefaultKandinskyStyle string `yaml:"default_kandinsky_style"`
+	ImageCDNOpenAPI     string
+	ImageCDNInternalAPI string
+	ImageCDNApiKey      string
 }
 
 type PortsConfig struct {
@@ -66,7 +64,8 @@ type WebsocketConfig struct {
 }
 
 type AnotherConfig struct {
-	TopRamsCount int `yaml:"top_rams_count"`
+	DefaultKandinskyStyle string `yaml:"default_kandinsky_style"`
+	TopRamsCount          int    `yaml:"top_rams_count"`
 }
 
 type SettingsConfig struct {
@@ -74,7 +73,6 @@ type SettingsConfig struct {
 	Clicks     ClicksConfig     `yaml:"clicks"`
 	Users      UsersConfig      `yaml:"users"`
 	Generation GenerationConfig `yaml:"generation"`
-	Image      ImageConfig      `yaml:"image"`
 	Websocket  WebsocketConfig  `yaml:"websocket"`
 	Another    AnotherConfig    `yaml:"another"`
 }
@@ -110,8 +108,11 @@ func InitConfigs() {
 			Password: getEnv("POSTGRES_PASSWORD", ""),
 			DBName:   getEnv("POSTGRES_DB", ""),
 		},
-		AnotherTokens: AnotherTokens{
-			FreeImageHostApiKey: getEnv("FREE_IMAGE_HOST_API_KEY", "")},
+		Image: ImageConfig{
+			ImageCDNApiKey:      getEnv("IMAGE_CDN_API_KEY", ""),
+			ImageCDNOpenAPI:     getEnv("IMAGE_CDN_OPEN_API", "http://localhost/cdn"),
+			ImageCDNInternalAPI: getEnv("IMAGE_CDN_INTERNAL_API", "http://localhost:8084"),
+		},
 	}
 	Conf = &Config{SecretConfig: secrets, SettingsConfig: *settings}
 }

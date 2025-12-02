@@ -1,87 +1,49 @@
 services:
-  nginx:
-    image: kalashnik/ramgenerator-nginx:latest
-    build:
-      context: .nginx
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - go-api
-      - go-static-server
-      - swagger
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost" ]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-      start_interval: 5s
-    restart: unless-stopped
-
-  swagger:
-    hostname: swagger
-    image: kalashnik/ramgenerator-swagger:latest
-    build:
-      context: swagger
-      dockerfile: Dockerfile
-    ports:
-      - "8083:8080"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-      start_interval: 5s
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:16
-    hostname: postgres
-    container_name: my_postgres
-    env_file:
-      - .env
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-
   go-api:
-    hostname: api
     image: kalashnik/ramgenerator-go-api:latest
+    hostname: taprams-api
     build:
       context: /
       dockerfile: Backend/Go-api/Dockerfile
+    networks:
+      - caddy-net
     env_file:
       - .env
     environment:
-      POSTGRES_HOST: "postgres:5432"
+      IMAGE_CDN_OPEN_API: "http://localhost/cdn"     # For production: https://taprams.ru/cdn
+      IMAGE_CDN_INTERNAL_API: "http://taprams-cdn:8080"
+      POSTGRES_HOST: "taprams-postgres:5432"
       GRPC_HOST: "python-ai:50051"
     ports:
       - "8082:8082"
     depends_on:
       - python-ai
       - postgres
+      - cdn
     restart: unless-stopped
 
   go-static-server:
-    hostname: static-server
     image: kalashnik/ramgenerator-go-static-server:latest
+    hostname: taprams-static-server
     build:
       context: /
       dockerfile: Backend/Go-static-server/Dockerfile
+    networks:
+      - caddy-net
+    env_file:
+      - .env
     environment:
-      API_URL: "http://localhost:8082/api"
-      WEBSOCKET_PROTOCOL: "ws"
+      API_URL: "http://localhost:8082/api"   # For production: "https://taprams.ru/api"
+      WEBSOCKET_PROTOCOL: "ws"           # For production: "wss"
     ports:
       - "8081:8081"
     restart: unless-stopped
 
   python-ai:
-    hostname: pygrpc
     image: kalashnik/ramgenerator-python-ai:latest
+    hostname: taprams-python-ai
+    networks:
+      - caddy-net
     build:
       context: /
       dockerfile: Backend/Python-ai/Dockerfile
@@ -93,5 +55,79 @@ services:
       - "50051:50051"
     restart: unless-stopped
 
+  swagger:
+    image: kalashnik/ramgenerator-swagger:latest
+    hostname: taprams-swagger
+    build:
+      context: swagger
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8080"
+    networks:
+      - caddy-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    hostname: taprams-postgres
+    networks:
+      - caddy-net
+    env_file:
+      - .env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  cdn:
+    image: kalashnik/ramgenerator-image-cdn:latest
+    hostname: taprams-cdn
+    networks:
+      - caddy-net
+    build:
+      context: .
+      dockerfile: cdn/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - '8084:8080'
+    volumes:
+      - cdn_uploads:/app/cdn/uploads
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    hostname: taprams-caddy
+    networks:
+      - caddy-net
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443/udp"
+    depends_on:
+      - go-api
+      - go-static-server
+      - swagger
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+networks:
+  caddy-net:
+    driver: bridge
+
 volumes:
   postgres:
+  cdn_uploads:
+  caddy_data:
+  caddy_config:

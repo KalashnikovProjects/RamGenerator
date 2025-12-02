@@ -29,11 +29,9 @@ clicks:
     - 500
 
 gemini:
-  model: "models/gemini-1.5-flash-latest"
+  model: "gemini-2.5-flash"
   rate_limit: 15
-  max_image_prompt_tokens: 150
-  max_description_tokens: 100
-  proxy: true
+  proxy: false
   proxy_endpoint: "cheery-baklava-3e2f26.netlify.app"
   proxy_transport: "rest"
 
@@ -51,7 +49,7 @@ generation:
     - 10
 
 image:
-  side: 400
+  side: 1024
   kandinsky_endpoint: "https://api-key.fusionbrain.ai/"
   default_kandinsky_style: "DEFAULT"
 

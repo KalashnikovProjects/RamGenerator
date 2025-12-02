@@ -40,11 +40,9 @@ class GEMINI:
     API_KEY = os.getenv("GEMINI_API_KEY")
     MODEL = yaml_config["gemini"]["model"]
     RATE_LIMIT = yaml_config["gemini"]["rate_limit"]
-    MAX_IMAGE_PROMPT_TOKENS = yaml_config["gemini"]["max_image_prompt_tokens"]
-    MAX_DESCRIPTION_TOKENS = yaml_config["gemini"]["max_description_tokens"]
 
     proxy = yaml_config["gemini"]["proxy"]
-    if proxy:
+    if proxy == "true":
         ENDPOINT = yaml_config["gemini"]["proxy_endpoint"]
         TRANSPORT = yaml_config["gemini"]["proxy_transport"]
     else:

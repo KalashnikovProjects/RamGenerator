@@ -1,0 +1,39 @@
+# For production: taprams.ru
+http://localhost {
+    @blockbots {
+        header User-Agent *GPTBot*
+        header User-Agent *Amazonbot*
+    }
+    respond @blockbots 403
+
+    handle /api/* {
+        reverse_proxy taprams-api:8082
+    }
+
+    handle_path /cdn/* {
+        header {
+            X-Content-Type-Options "nosniff"
+            X-Frame-Options "DENY"
+            Referrer-Policy "no-referrer"
+            Access-Control-Allow-Origin "*"
+        }
+
+        reverse_proxy taprams-cdn:8080 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle_path /swagger {
+        reverse_proxy taprams-swagger:8080
+    }
+    handle_path /swagger/* {
+        reverse_proxy taprams-swagger:8080
+    }
+
+
+    handle {
+        reverse_proxy taprams-static-server:8081
+    }
+}

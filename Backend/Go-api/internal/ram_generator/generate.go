@@ -2,7 +2,6 @@ package ram_generator
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/KalashnikovProjects/RamGenerator/Backend/Go-Api/internal/config"
@@ -18,6 +17,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -33,15 +33,6 @@ var (
 	InternalUploadError      = errors.New("internal image upload error")
 	InternalDescriptionError = errors.New("internal description generating error")
 )
-
-type imageUploadApiResponseImage struct {
-	Url string `json:"url"`
-}
-
-type imageUploadApiResponse struct {
-	StatusCode int                         `json:"status_code"`
-	Image      imageUploadApiResponseImage `json:"image"`
-}
 
 func AuthInterceptor(token string) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -109,7 +100,7 @@ func GenerateHybridPrompt(ctx context.Context, grpcClient pb.RamGeneratorClient,
 }
 
 func GenerateRamImage(ctx context.Context, grpcClient pb.RamGeneratorClient, prompt string) (string, error) {
-	generatedImage, err := grpcClient.GenerateImage(ctx, &pb.GenerateImageRequest{Prompt: prompt, Style: config.Conf.Image.DefaultKandinskyStyle})
+	generatedImage, err := grpcClient.GenerateImage(ctx, &pb.GenerateImageRequest{Prompt: prompt, Style: config.Conf.Another.DefaultKandinskyStyle})
 	if err != nil {
 		st, ok := status.FromError(err)
 		slog.Error("generate ram image grpc request error", slog.String("error", err.Error()), slog.String("status", st.Message()))
@@ -130,31 +121,36 @@ func GenerateRamImage(ctx context.Context, grpcClient pb.RamGeneratorClient, pro
 }
 
 func UploadImage(base64Image string) (string, error) {
-	fromData := url.Values{
-		"key":    {config.Conf.AnotherTokens.FreeImageHostApiKey},
-		"source": {base64Image},
+	requestUrl, err := url.JoinPath(config.Conf.Image.ImageCDNInternalAPI, "upload")
+	if err != nil {
+		slog.Error("url join path error", slog.String("error", err.Error()))
+		return "", InternalUploadError
 	}
-	resp, err := http.PostForm(fmt.Sprintf("https://freeimage.host/api/1/upload"), fromData)
+	req, err := http.NewRequest("POST", requestUrl, strings.NewReader(base64Image))
 	if err != nil {
 		slog.Error("image upload request error", slog.String("error", err.Error()))
 		return "", InternalUploadError
 	}
-	var jsonResp imageUploadApiResponse
-	data, err := io.ReadAll(resp.Body)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.Conf.Image.ImageCDNApiKey))
+	req.Header.Set("Content-Type", "image/jpg")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("image upload request read error", slog.String("error", err.Error()))
+		slog.Error("image upload request error", slog.String("error", err.Error()))
 		return "", InternalUploadError
 	}
-	err = json.Unmarshal(data, &jsonResp)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("image upload unmarshal json error", slog.String("error", err.Error()))
+		slog.Error("image upload read body error", slog.String("error", err.Error()))
 		return "", InternalUploadError
 	}
-	if jsonResp.StatusCode != 200 {
-		slog.Error("image upload request error", slog.Int("statusCode", jsonResp.StatusCode), slog.Any("response", jsonResp))
+	if resp.StatusCode != 201 {
+		slog.Error("image upload request error", slog.Int("statusCode", resp.StatusCode), slog.String("body:", string(body)))
 		return "", InternalUploadError
 	}
-	return jsonResp.Image.Url, nil
+	return string(body), nil
 }
 
 func GenerateDescription(ctx context.Context, grpcClient pb.RamGeneratorClient, url string) (string, error) {
@@ -196,7 +192,11 @@ func FullGeneration(ctx context.Context, gRPCClient pb.RamGeneratorClient, userP
 	if err != nil {
 		return entities.Ram{}, err
 	}
-	imageDescription, err := GenerateDescription(ctx, gRPCClient, imageUrl)
+	internalUrl, err := url.JoinPath(config.Conf.Image.ImageCDNInternalAPI, imageUrl)
+	if err != nil {
+		return entities.Ram{}, err
+	}
+	imageDescription, err := GenerateDescription(ctx, gRPCClient, internalUrl)
 	if err != nil {
 		if errors.Is(err, NoRamError) && retriesOnNoRam > 0 {
 			slog.Info("retry after NoRamError", slog.String("place", "FullGeneration"))
@@ -204,5 +204,9 @@ func FullGeneration(ctx context.Context, gRPCClient pb.RamGeneratorClient, userP
 		}
 		return entities.Ram{}, err
 	}
-	return entities.Ram{UserId: userId, Description: imageDescription, ImageUrl: imageUrl}, nil
+	openUrl, err := url.JoinPath(config.Conf.Image.ImageCDNOpenAPI, imageUrl)
+	if err != nil {
+		return entities.Ram{}, err
+	}
+	return entities.Ram{UserId: userId, Description: imageDescription, ImageUrl: openUrl}, nil
 }
