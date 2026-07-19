@@ -494,7 +494,7 @@ class Generator {
                 content.innerHTML = `
                 <label class="mb-4 prompt-label">
                     Введите запрос для вашего первого барана<br>
-                    <input class="prompt-input" id="prompt" type="text" maxlength="30">
+                    <input class="prompt-input" id="prompt" type="text" maxlength="${MAX_PROMPT_LEN}">
                 </label>
                 <div id="generation-bottom" class="text-center mt-auto">
                     <button id="enter-prompt" class="button-user" onclick="ramGenerator.sendPrompt()">Далее</button>

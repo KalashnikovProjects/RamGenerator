@@ -27,16 +27,17 @@ class ImageGenerationUnavailableError(Exception):
     pass
 
 
+class ImageGenerationInternalError(Exception):
+    pass
+
+
 class NoRamError(Exception):
     pass
 
 
-# Dict keys on russian for russia model response
-DescriptionResponse = TypedDict('DescriptionResponse', {'есть баран': bool, 'краткое описание': str}, total=True)
+DescriptionResponse = TypedDict('DescriptionResponse', {'contains_ram': bool, 'description': str}, total=True)
 
-
-# Dict keys on russian for russia model response
-PromptResponse = TypedDict('PromptResponse', {'есть мат': bool, 'запрос': str}, total=True)
+PromptResponse = TypedDict('PromptResponse', {'contains_swear': bool, 'prompt': str}, total=True)
 
 
 class PromptGenerator:
@@ -78,53 +79,28 @@ class ImageGenerationTimeoutError(TimeoutError):
 
 
 class ImageGenerator:
-    def __init__(self, url, api_key, secret_key):
+    def __init__(self, url, api_key):
         self.URL = url
-        self.AUTH_HEADERS = {
-            'X-Key': f'Key {api_key}',
-            'X-Secret': f'Secret {secret_key}',
-        }
+        self.API_KEY = api_key
 
-    def get_pipeline(self):
-        response = requests.get(self.URL + 'key/api/v1/pipelines', headers=self.AUTH_HEADERS)
-        data = response.json()
-        return data[0]['id']
-
-    def generate(self, prompt, style, pipeline, width, height, images=1):
-        params = {
-            "type": "GENERATE",
-            "style": style,
-            "numImages": images,
+    # @retry(tries=3, delay=2)
+    def generate(self, prompt, width=512, height=512):
+        data = {
+            "prompt": prompt,
             "width": width,
             "height": height,
-            "negativePromptDecoder": config.PROMPTS.IMAGE_NEGATIVE_PROMPT,
-            "generateParams": {
-                "query": f"{prompt}"
-            }
         }
-
-        data = {
-            'pipeline_id': (None, pipeline),
-            'params': (None, json.dumps(params), 'application/json')
-        }
-        response = requests.post(self.URL + 'key/api/v1/pipeline/run', headers=self.AUTH_HEADERS, files=data)
-        data = response.json()
-        return data['uuid']
-
-    def check_generation(self, request_id, attempts=20, delay=10):
-        for attempt in range(attempts):
-            response = requests.get(self.URL + 'key/api/v1/pipeline/status/' + request_id, headers=self.AUTH_HEADERS)
-            data = response.json()
-            if "status" not in data:
-                logging.warning("Suspicious response from image generation service", data)
-            if data['status'] == 'DONE':
-                return data['result']["files"][0]
-            elif "DISABLED" in data.get("pipeline_status", ""):
-                return ImageGenerationUnavailableError
-            elif data["status"] == "FAIL":
-                if data["result"]["censored"]:
-                    raise ImageCensorshipError
-                else:
-                    raise ImageGenerationUnavailableError
-            time.sleep(delay)
-        raise ImageGenerationTimeoutError(f'Image generation failed after {attempts} attempts')
+        try:
+            response = requests.post(
+                self.URL,
+                json=data,
+                headers={"Authorization": f"Bearer {self.API_KEY}",
+                         "Content-Type": "application/json"},
+                timeout=100,
+            )
+            if response.status_code == 200:
+                return response.json()["image"]
+            else:
+                raise ImageGenerationInternalError
+        except TimeoutError as e:
+            raise ImageGenerationTimeoutError

@@ -15,6 +15,7 @@ type BaseTemplateData struct {
 	ApiUrl            string
 	WebsocketProtocol string
 	DefaultAvatar     string
+	MaxPromptLen      string
 }
 
 type Paths struct {
@@ -38,6 +39,9 @@ type yamlConfigData struct {
 	Users struct {
 		DefaultAvatar string `yaml:"default_avatar"`
 	} `yaml:"users"`
+	Generation struct {
+		MaxPromptLen string `yaml:"max_prompt_len"`
+	} `yaml:"generation"`
 }
 
 func InitConfigs() {
@@ -62,6 +66,7 @@ func InitConfigs() {
 			ApiUrl:            getEnv("API_URL", "http://localhost:8082/api"),
 			WebsocketProtocol: getEnv("WEBSOCKET_PROTOCOL", "ws"),
 			DefaultAvatar:     configData.Users.DefaultAvatar,
+			MaxPromptLen:      configData.Generation.MaxPromptLen,
 		},
 		Paths: Paths{
 			Root:      rootPath,

@@ -24,21 +24,19 @@ class PROMPTS:
     BASE_HYBRID_PROMPT = yaml_config["prompts"]["base_hybrid_prompt"]
 
     BASE_IMAGE_PROMPT = yaml_config["prompts"]["base_image_prompt"]
-    IMAGE_NEGATIVE_PROMPT = yaml_config["prompts"]["negative_image_prompt"]
 
     BASE_DESCRIPTION_PROMPT = yaml_config["prompts"]["base_description_prompt"]
 
 
-class KANDINSKY:
-    SIDE = yaml_config["image"]["side"]
-    ENDPOINT = yaml_config["image"]["kandinsky_endpoint"]
-    KEY = os.getenv("KANDINSKY_KEY")
-    SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
+class IMAGE_GENERATION:
+    API_KEY = os.getenv("IMAGE_GENERATOR_API_KEY")
+    ENDPOINT = yaml_config["image_generation"]["endpoint"]
+    IMAGE_SIDE = yaml_config["image_generation"]["image_side"]
 
 
 class GEMINI:
     API_KEY = os.getenv("GEMINI_API_KEY")
-    MODEL = yaml_config["gemini"]["model"]
+    MODEL = os.getenv("GEMINI_MODEL") or yaml_config["gemini"]["model"]
     RATE_LIMIT = yaml_config["gemini"]["rate_limit"]
 
     proxy = yaml_config["gemini"]["proxy"]

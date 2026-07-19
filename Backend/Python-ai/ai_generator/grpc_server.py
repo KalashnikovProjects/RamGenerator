@@ -46,15 +46,15 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             res = generator.generate(prompt, [], generation_config={"response_mime_type": "application/json",
                                                                     "response_schema": ai_generators.PromptResponse})
             result = json.loads(res)
-            if result.get("есть мат", False):
+            if result.get("contains_swear", False):
                 raise ai_generators.GeminiCensorshipError
-            if len(result["запрос"]) > 200:
-                result["запрос"] = result["запрос"][:197] + "..."
-            return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
+            if len(result["prompt"]) > 200:
+                result["prompt"] = result["prompt"][:197] + "..."
+            return ram_generator_pb2.RamImagePrompt(prompt=result["prompt"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt contains illegal content")
         except Exception as e:
-            logging.exception("Generate start prompt error", e)
+            logging.exception(f"Generate start prompt error {e}")
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error")
 
     @staticmethod
@@ -71,15 +71,15 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             res = generator.generate(prompt, [], generation_config={"response_mime_type": "application/json",
                                                                     "response_schema": ai_generators.PromptResponse})
             result = json.loads(res)
-            if result.get("есть мат", False):
+            if result.get("contains_swear", False):
                 raise ai_generators.GeminiCensorshipError
-            if len(result["запрос"]) > 200:
-                result["запрос"] = result["запрос"][:197] + "..."
-            return ram_generator_pb2.RamImagePrompt(prompt=result["запрос"])
+            if len(result["prompt"]) > 200:
+                result["prompt"] = result["prompt"][:197] + "..."
+            return ram_generator_pb2.RamImagePrompt(prompt=result["prompt"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "User prompt or descriptions contains illegal content")
         except Exception as e:
-            logging.exception("Generate hybrid prompt error", e)
+            logging.exception(f"Generate hybrid prompt error {e}")
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error")
 
     @staticmethod
@@ -87,23 +87,22 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
         try:
             logging.info(f"Generating image from prompt:{request.prompt}")
 
-            api = ai_generators.ImageGenerator(config.KANDINSKY.ENDPOINT, config.KANDINSKY.KEY,
-                                               config.KANDINSKY.SECRET_KEY)
-            pipeline_id = api.get_pipeline()
-            image_uuid = api.generate(f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}", request.style, pipeline_id,
-                                      config.KANDINSKY.SIDE, config.KANDINSKY.SIDE)
+            generator = ai_generators.ImageGenerator(config.IMAGE_GENERATION.ENDPOINT, config.IMAGE_GENERATION.API_KEY)
+            image = generator.generate(
+                                 prompt=f"{config.PROMPTS.BASE_IMAGE_PROMPT}, {request.prompt}",
+                                 width=config.IMAGE_GENERATION.IMAGE_SIDE,
+                                 height=config.IMAGE_GENERATION.IMAGE_SIDE)
 
-            image = api.check_generation(image_uuid)
             return ram_generator_pb2.RamImage(image=image)
         except ai_generators.ImageCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"User prompt contains illegal content")
         except ai_generators.ImageGenerationUnavailableError as e:
-            logging.warning("mage generation service unavailable", e)
+            logging.warning(f"image generation service unavailable {e}")
             context.abort(grpc.StatusCode.INTERNAL, f"Image generation service unavailable")
         except ai_generators.ImageGenerationTimeoutError:
             context.abort(grpc.StatusCode.DEADLINE_EXCEEDED, f"The waiting time for image generation has been exceeded")
         except Exception as e:
-            logging.exception("Generate image error", e)
+            logging.exception(f"Generate image error {e}")
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error")
 
         return context
@@ -126,20 +125,20 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             }], generation_config={"response_mime_type": "application/json",
                                    "response_schema": ai_generators.DescriptionResponse})
             result = json.loads(res)
-            if not result.get("есть баран", False):
+            if not result.get("contains_ram", False):
                 raise ai_generators.NoRamError
-            if len(result["краткое описание"]) > 75:
-                result["краткое описание"] = result["краткое описание"][:72] + "..."
-            return ram_generator_pb2.RamDescription(description=result["краткое описание"])
+            if len(result["description"]) > 75:
+                result["description"] = result["description"][:72] + "..."
+            return ram_generator_pb2.RamDescription(description=result["description"])
         except ai_generators.GeminiCensorshipError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "The image contains illegal content")
         except ai_generators.NoRamError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Image does not contain ram")
         except requests.exceptions.RequestException as e:
-            logging.warning("Image downloading error", e)
+            logging.warning(f"Image downloading error {e}")
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"Image downloading error")
         except Exception as e:
-            logging.exception("Generate description error", e)
+            logging.exception(f"Generate description error {e}")
             context.abort(grpc.StatusCode.INTERNAL, f"Internal server error")
 
     @classmethod
