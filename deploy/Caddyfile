@@ -1,5 +1,7 @@
 # For production: taprams.ru
 http://localhost {
+    redir /swagger /swagger/ permanent
+
     @blockbots {
         header User-Agent *GPTBot*
         header User-Agent *Amazonbot*
@@ -25,13 +27,9 @@ http://localhost {
         }
     }
 
-    handle_path /swagger {
-        reverse_proxy taprams-swagger:8080
-    }
     handle_path /swagger/* {
         reverse_proxy taprams-swagger:8080
     }
-
 
     handle {
         reverse_proxy taprams-static-server:8081

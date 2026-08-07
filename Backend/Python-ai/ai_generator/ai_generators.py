@@ -1,9 +1,5 @@
-import logging
-
 import google.generativeai as genai
-import json
 import requests
-import time
 from retry import retry
 from typing_extensions import TypedDict
 
@@ -83,7 +79,7 @@ class ImageGenerator:
         self.URL = url
         self.API_KEY = api_key
 
-    # @retry(tries=3, delay=2)
+    @retry(tries=3, delay=1)
     def generate(self, prompt, width=512, height=512):
         data = {
             "prompt": prompt,

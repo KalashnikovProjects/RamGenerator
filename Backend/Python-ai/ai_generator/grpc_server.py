@@ -37,7 +37,6 @@ class RamGeneratorServer(ram_generator_pb2_grpc.RamGenerator):
             logging.info(f"Generating prompt from prompt:{request.user_prompt}")
 
             generator = ai_generators.PromptGenerator(system_instructions=config.PROMPTS.BASE_START_PROMPT,
-                                                      max_output_tokens=config.GEMINI.MAX_IMAGE_PROMPT_TOKENS,
                                                       model_name=config.GEMINI.MODEL,
                                                       safety_settings=config.GEMINI.SAFETY_SETTINGS)
 
